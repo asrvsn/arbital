@@ -1,6 +1,7 @@
 module Main where
 
-import Lib
+import Arbital.Endpoints
+import Arbital.Types
 
 main :: IO ()
-main = someFunc
+main = run 8081 app
