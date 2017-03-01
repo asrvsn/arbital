@@ -44,7 +44,8 @@ instance ToJSON ArgumentID
 instance FromJSON ArgumentID
 
 data Argument = Argument 
-  { argumentBody :: [ClaimID]
+  { argumentSummary :: Text
+  , argumentBody :: [ClaimID]
   , argumentOwner :: UserID
   , argumentCreationDate :: UTCTime
   , argumentID :: ArgumentID
