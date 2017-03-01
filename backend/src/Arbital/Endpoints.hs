@@ -21,6 +21,15 @@ type ClaimsAPI =
   -- GET to /claims to get a page of all claims
   :<|> "claims" :> Get '[JSON] AllClaimsPage
 
+  -- POST to /claims/:claimid/.. to create arguments for/against it 
+  :<|> "claims" :> Capture "claimid" ClaimID :> 
+
+      (    "for" :> ReqBody '[JSON] Argument :> Post '[JSON] Argument
+
+      :<|> "against" :> ReqBody '[JSON] Argument :> Post '[JSON] Argument
+
+      )
+
 type UsersAPI = 
   -- POST to /users to create a new user
        "users" :> "create" :> ReqBody '[JSON] User :> Post '[JSON] User
@@ -50,6 +59,8 @@ server = root
     :<|>     createClaim
         :<|> getClaim
         :<|> getClaimsPage
+        :<|>     postArgumentFor
+            :<|> postArgumentAgainst
     :<|>     createUser
         :<|> getUserPage
         :<|> putUser
