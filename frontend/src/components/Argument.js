@@ -5,6 +5,8 @@ import FlatButton from 'material-ui/FlatButton';
 
 import {List, ListItem} from 'material-ui/List';
 
+import AuthoredListItem from './AuthoredListItem';
+
 const styles = {
   chip: {
     margin: 4,
@@ -13,19 +15,22 @@ const styles = {
 
 class Argument extends Component {
 
+  componentDidMount() {
+    // TODO load argument items into state
+  }
+
   render() {
     const { argument } = this.props
+    const { items } = this.state
 
     // TODO
     const isMyArgument = undefined
 
     return (
-      <Card expanded={true}>
+      <Card>
         <CardHeader
           title={argument.summary}
           subtitle={argument.owner}
-          actAsExpander={true}
-          showExpandableButton={true}
         />
         { isMyArgument &&
           <CardActions>
@@ -33,29 +38,20 @@ class Argument extends Component {
             <FlatButton label="Delete" />
           </CardActions>
         }
-        <CardText expandable={true}>
+        <CardText>
           <List>
-            { argument.claimLinks.map(claimLink => {
-                <ListItem primaryText={claimLink.body}
-                          rightIcon={
-                              <Chip onTouchTap={e =>
-                                      this.handleAuthorPress(claimLink.authorId)
-                                    }
-                                    style={styles.chip}>
-                                <Avatar size={32}>{claimLink.author[0]}</Avatar>
-                                {claimLink.author}
-                              </Chip>
-                            } />
-              })
+            { items.map(item =>
+                <AuthoredListItem
+                  text={item.claimText}
+                  authorId={item.claimAuthorId}
+                  authorName={item.claimAuthorName}
+                />
+              )
             }
           </List>
         </CardText>
       </Card>
     )
-  }
-
-  handleAuthorPress(authorId) {
-    //TODO
   }
 }
 

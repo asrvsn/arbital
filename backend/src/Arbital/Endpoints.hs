@@ -8,22 +8,34 @@ import Servant.API
 import Arbital.Types
 import Arbital.Handlers
 
--- homepage
-type RootEndpoint = Get '[JSON] AllClaimsPage
+-- GET to / to get a page of all claims
+type RootEndpoint = Get '[JSON] [ClaimItem]
+
+type ArgumentsAPI = 
+  "arguments" :> Capture "argumentid" ArgumentID :> 
+    (    "items" :> Get '[JSON] [ClaimItem]
+
+    :<|> Get '[JSON] Argument
+
+    )
 
 type ClaimsAPI = 
   -- POST to /claims to create a new claim
        "claims" :> "create" :> ReqBody '[JSON] Claim :> Post '[JSON] Claim
   
-  -- GET to /claims/:claimid to read a claim
-  :<|> "claims" :> Capture "claimid" ClaimID :> Get '[JSON] ClaimPage
+  :<|> "claims" :> Capture "claimid" ClaimID :> 
+  -- GET to /claims/:claimid/items to read a claim's argument items
+      (    "items" :> Get '[JSON] [ArgumentItem]
 
-  -- GET to /claims to get a page of all claims
-  :<|> "claims" :> Get '[JSON] AllClaimsPage
+  -- GET to /claims/:claimid to read a claim
+      :<|> Get '[JSON] Claim
+
+      )
+
+  :<|> "feed" :> RootEndpoint
 
   -- POST to /claims/:claimid/.. to create arguments for/against it 
   :<|> "claims" :> Capture "claimid" ClaimID :> 
-
       (    "for" :> ReqBody '[JSON] Argument :> Post '[JSON] Argument
 
       :<|> "against" :> ReqBody '[JSON] Argument :> Post '[JSON] Argument
@@ -34,8 +46,18 @@ type UsersAPI =
   -- POST to /users to create a new user
        "users" :> "create" :> ReqBody '[JSON] User :> Post '[JSON] User
 
-  -- GET to /users/:userid to get a user's page
-  :<|> "users" :> Capture "userid" UserID :> Get '[JSON] UserPage
+  -- GET to /users/:userid to get a user
+  :<|> "users" :> Capture "userid" UserID :> 
+      (    "items" :> 
+          (    "arguments" :> Get '[JSON] [ArgumentItem]
+
+          :<|> "claims" :> Get '[JSON] [ClaimItem]
+
+          )
+
+      :<|> Get '[JSON] User
+
+      )
 
   -- PUT to /users/:userid to update a user's info
   :<|> "users" :> Capture "userid" UserID :> ReqBody '[JSON] User :> Put '[JSON] User
