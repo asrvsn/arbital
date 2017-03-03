@@ -6,6 +6,7 @@ import FlatButton from 'material-ui/FlatButton';
 import {List, ListItem} from 'material-ui/List';
 
 import AuthoredListItem from './AuthoredListItem';
+import GetterHOC from '../hoc/GetterHOC';
 
 const styles = {
   chip: {
@@ -13,46 +14,51 @@ const styles = {
   },
 }
 
-class Argument extends Component {
+const Argument = (props) => {
+  const { argument } = this.props
+  const { items } = this.state
 
-  componentDidMount() {
-    // TODO load argument items into state
-  }
+  const isMyArgument = true // TODO
 
-  render() {
-    const { argument } = this.props
-    const { items } = this.state
-
-    // TODO
-    const isMyArgument = undefined
-
-    return (
-      <Card>
-        <CardHeader
-          title={argument.summary}
-          subtitle={argument.owner}
-        />
-        { isMyArgument &&
-          <CardActions>
-            <FlatButton label="Update" />
-            <FlatButton label="Delete" />
-          </CardActions>
-        }
-        <CardText>
-          <List>
-            { items.map(item =>
-                <AuthoredListItem
-                  text={item.claimText}
-                  authorId={item.claimAuthorId}
-                  authorName={item.claimAuthorName}
-                />
-              )
-            }
-          </List>
-        </CardText>
-      </Card>
-    )
-  }
+  return (
+    <Card>
+      <CardHeader
+        title={argument.summary}
+        subtitle={argument.owner}
+      />
+      { isMyArgument &&
+        <CardActions>
+          <FlatButton label="Update" />
+          <FlatButton label="Delete" />
+        </CardActions>
+      }
+      <CardText>
+        <List>
+          { items.map(item =>
+              <AuthoredListItem
+                text={item.claimText}
+                authorId={item.claimAuthorId}
+                authorName={item.claimAuthorName}
+                hrefPath={'/claims/' + item.claimId}
+              />
+            )
+          }
+        </List>
+      </CardText>
+    </Card>
+  )
 }
 
-export default Argument
+export default GetterHOC(
+  Argument,
+  (props) => ([
+    {
+      path: props.location.pathName, // TODO
+      mapResponseToProps: (resp) => {argument: JSON.parse(resp.body)}
+    },
+    {
+      path: props.location.pathName + '/items', // TODO
+      mapResponseToProps: (resp) => {items: JSON.parse(resp.body)}
+    }
+  ])
+)

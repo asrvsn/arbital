@@ -4,8 +4,8 @@ import {Toolbar, ToolbarGroup, ToolbarSeparator, ToolbarTitle} from 'material-ui
 import FontIcon from 'material-ui/FontIcon';
 import RaisedButton from 'material-ui/RaisedButton';
 
-const logout = () => {
-  // TODO
+const logout = (props) => {
+  props.history.push('/users/logout')
 }
 
 const Header = (props) => {
@@ -20,7 +20,11 @@ const Header = (props) => {
         <ToolbarTitle text="Options" />
         <FontIcon className="muidocs-icon-custom-sort" />
         <ToolbarSeparator />
-        <RaisedButton label="Logout" secondary={true} onTouchTap={e => logout() } />
+        <RaisedButton
+          label="Logout"
+          secondary={true}
+          onTouchTap={e => logout(props)}
+        />
       </ToolbarGroup>
     </Toolbar>
   )

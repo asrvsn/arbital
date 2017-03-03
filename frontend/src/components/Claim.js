@@ -5,6 +5,7 @@ import {List} from 'material-ui/List';
 import Toggle from 'material-ui/Toggle';
 
 import AuthoredListItem from './AuthoredListItem';
+import GetterHOC from '../hoc/GetterHOC';
 
 const styles = {
   block: {
@@ -30,26 +31,20 @@ const styles = {
   },
 }
 
-
 class Claim extends Component {
 
   constructor(props) {
     super(props)
     this.state = {
-      items: [],
-      forAgainst: 'For'
+      showingFor: true
     }
   }
 
-  componentDidMount() {
-    //TODO make request for arguments and set state
-  }
-
   render() {
-    const { claim } = this.props
-    const { items, forAgainst } = this.state
+    const { claim, items } = this.props
+    const { showingFor } = this.state
 
-    const shownItems = items.filter(item => item.forAgainst == forAgainst)
+    const shownItems = items.filter(item => item.isFor == showingFor)
 
     return (
       <Card>
@@ -70,23 +65,33 @@ class Claim extends Component {
                   text={item.argumentText}
                   authorId={item.argumentAuthorId}
                   authorName={item.argumentAuthorName}
+                  hrefPath={'/arguments/' + item.argumentId}
                 />
               )
             }
           </List>
         </CardText>
-        <CardActions>
-          <FlatButton label="Action1" />
-          <FlatButton label="Action2" />
-        </CardActions>
       </Card>
     )
   }
 
   toggleForAgainst() {
-    const { forAgainst } = this.state
     this.setState({
-      forAgainst: forAgainst == 'For' ? 'Against' : 'For'
+      showingFor: ! this.state.showingFor
     })
   }
 }
+
+export default GetterHOC(
+  Claim,
+  (props) => ([
+    {
+      path: props.location.pathName,
+      mapResponseToProps: (resp) => {claim: JSON.parse(resp.body)}
+    },
+    {
+      path: props.location.pathName + '/items',
+      mapResponseToProps: (resp) => {items: JSON.parse(resp.body)}
+    }
+  ])
+)

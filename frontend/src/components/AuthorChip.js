@@ -6,8 +6,8 @@ const styles = {
   },
 }
 
-const goToAuthor = (authorId) => {
-  // TODO navigate to author's page
+const goToAuthor = (props, authorId) => {
+  props.history.push('/users/' + authorId)
 }
 
 const AuthorChip = (props) => {
@@ -15,7 +15,7 @@ const AuthorChip = (props) => {
 
   return (
     <Chip onTouchTap={e =>
-            goToAuthor(authorId)
+            goToAuthor(props, authorId)
           }
           style={styles.chip}>
       <Avatar size={32}>{authorName[0]}</Avatar>
@@ -23,3 +23,5 @@ const AuthorChip = (props) => {
     </Chip>
   )
 }
+
+export default AuthorChip
