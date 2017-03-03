@@ -23,15 +23,6 @@ type ClaimsAPI =
   -- POST to /claims to create a new claim
        "claims" :> "create" :> ReqBody '[JSON] Claim :> Post '[JSON] Claim
   
-  :<|> "claims" :> Capture "claimid" ClaimID :> 
-  -- GET to /claims/:claimid/items to read a claim's argument items
-      (    "items" :> Get '[JSON] [ArgumentItem]
-
-  -- GET to /claims/:claimid to read a claim
-      :<|> Get '[JSON] Claim
-
-      )
-
   :<|> "feed" :> RootEndpoint
 
   -- POST to /claims/:claimid/.. to create arguments for/against it 
@@ -40,6 +31,11 @@ type ClaimsAPI =
 
       :<|> "against" :> ReqBody '[JSON] Argument :> Post '[JSON] Argument
 
+  -- GET to /claims/:claimid/items to read a claim's argument items
+      :<|> "items" :> Get '[JSON] [ArgumentItem]
+
+  -- GET to /claims/:claimid to read a claim
+      :<|> Get '[JSON] Claim
       )
 
 type UsersAPI = 

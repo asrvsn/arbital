@@ -2,9 +2,8 @@ import request from 'request'
 
 // We only need to import the modules necessary for initial render
 import CoreLayout from '../layouts/CoreLayout'
-import Home from './Home'
 
-const mirroredRoute = ({path, propKey, componentPath, childRoutes}) => (
+const mirroredRoute = ({path, mapResponseToProps, componentPath, childRoutes}) => (
   (store) => ({
     path,
     childRoutes,
@@ -22,8 +21,7 @@ const mirroredRoute = ({path, propKey, componentPath, childRoutes}) => (
         .get(url)
         .on('response', (response) => {
           if (response.statusCode == 200) {
-            const props = {}
-            props[propKey] = JSON.parse(response.body)
+            const props = mapResponseToProps(response)
             cb(null, <Component {...props} />)
           } else {
             cb(null, <RedBox text={`failed to reach ${url}`} />)
@@ -32,7 +30,7 @@ const mirroredRoute = ({path, propKey, componentPath, childRoutes}) => (
         .
 
     /* Webpack named bundle   */
-    }, 'counter')
+    }, componentPath)
   }
   })
 )
@@ -40,22 +38,57 @@ const mirroredRoute = ({path, propKey, componentPath, childRoutes}) => (
 /*  Note: Instead of using JSX, we recommend using react-router
     PlainRoute objects to build route definitions.   */
 
-export const mirroredRoute({
+export default mirroredRoute({
   path: '/',
-  propKey: 'items',
+  mapResponseToProps: (resp) => {feed: JSON.parse(resp.body)},
   componentPath: '../components/Feed',
   childRoutes: [
-    mirroredRoute({
-      path: ''
-    })
-  ]
-})
 
-export const createRoutes = (store) => ({
-  path        : '/',
-  component   : CoreLayout,
-  indexRoute  : {component: Feed},
-  childRoutes : [
+    // mirrored routes
+    mirroredRoute({
+      path: 'arguments/:argumentid',
+      componentPath: '../components/Argument',
+      mapResponseToProps: (resp) => {argument: JSON.parse(resp.body)},
+    }),
+
+    mirroredRoute({
+      path: 'claims/:claimid',
+      componentPath: '../components/Claim',
+      mapResponseToProps: (resp) => {claim: JSON.parse(resp.body)},
+      childRoutes: [
+        (store) => ({
+          path: 'for',
+          component: <CreateArgument for={true} claimId={/* TODO */} />,
+        }),
+        (store) => ({
+          path: 'against',
+          component: <CreateArgument against={true} claimId={/* TODO */} />,
+        })
+      ]
+    }),
+
+    mirroredRoute({
+      path: 'feed',
+      componentPath: '../components/Feed',
+      mapResponseToProps: (resp) => {feed: JSON.parse(resp.body)},
+    }),
+
+    mirroredRoute({
+      path: 'users/:userid',
+      componentPath: '../components/User',
+      mapResponseToProps: (resp) => {user: JSON.parse(resp.body)},
+    }),
+
+    // non-mirrored routes
+    (store) => ({
+      path: 'claims/create',
+      component: <CreateClaim />,
+    }),
+
+    (store) => ({
+      path: 'arguments/create',
+      component: <CreateArgument />,
+    }),
 
   ]
 })
@@ -78,4 +111,3 @@ export const createRoutes = (store) => ({
     when the route exists and matches.
 */
 
-export default createRoutes
