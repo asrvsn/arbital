@@ -1,95 +1,90 @@
-import request from 'request'
 
-// We only need to import the modules necessary for initial render
-import CoreLayout from '../layouts/CoreLayout'
+import Feed from '../components/Feed'
 
-const mirroredRoute = ({path, mapResponseToProps, componentPath, childRoutes}) => (
+// Build a route with an aynchronously loaded component
+const asyncRoute = ({path, componentPath, childRoutes}) => (
   (store) => ({
     path,
     childRoutes,
     getComponent (nextState, cb) {
-    /*  Webpack - use 'require.ensure' to create a split point
-        and embed an async module loader (jsonp) when bundling   */
-    require.ensure([], (require) => {
-      /*  Webpack - use require callback to define
-          dependencies for bundling   */
-      const Component = require(componentPath).default
+      /*  Webpack - use 'require.ensure' to create a split point
+          and embed an async module loader (jsonp) when bundling   */
+      require.ensure([], (require) => {
+        /*  Webpack - use require callback to define
+            dependencies for bundling   */
+        const component = require(componentPath).default(store)
 
-      /*  Return getComponent   */
-      const url = nextState.location.path // TODO this could be wrong
-      request
-        .get(url)
-        .on('response', (response) => {
-          if (response.statusCode == 200) {
-            const props = mapResponseToProps(response)
-            cb(null, <Component {...props} />)
-          } else {
-            cb(null, <RedBox text={`failed to reach ${url}`} />)
-          }
-        })
-        .
-
-    /* Webpack named bundle   */
-    }, componentPath)
-  }
+        /*  Return getComponent   */
+        cb(null, component)
+      })
+    }
   })
 )
 
 /*  Note: Instead of using JSX, we recommend using react-router
     PlainRoute objects to build route definitions.   */
 
-export default mirroredRoute({
-  path: '/',
-  mapResponseToProps: (resp) => {feed: JSON.parse(resp.body)},
-  componentPath: '../components/Feed',
+const argumentsAPI = asyncRoute({
+  path: 'arguments/:argumentid',
+  componentPath: '../components/Argument'
+})
+
+const claimsAPI = (store) => ({
+  path: 'claims',
   childRoutes: [
 
-    // mirrored routes
-    mirroredRoute({
-      path: 'arguments/:argumentid',
-      componentPath: '../components/Argument',
-      mapResponseToProps: (resp) => {argument: JSON.parse(resp.body)},
+    asyncRoute({
+      path: 'create',
+      componentPath: '../components/CreateClaim'
     }),
 
-    mirroredRoute({
-      path: 'claims/:claimid',
+    asyncRoute({
+      path: ':claimid',
       componentPath: '../components/Claim',
-      mapResponseToProps: (resp) => {claim: JSON.parse(resp.body)},
       childRoutes: [
-        (store) => ({
+
+        asyncRoute({
           path: 'for',
-          component: <CreateArgument for={true} claimId={/* TODO */} />,
+          componentPath: '../components/CreateArgument',
         }),
-        (store) => ({
+
+        asyncRoute({
           path: 'against',
-          component: <CreateArgument against={true} claimId={/* TODO */} />,
-        })
+          componentPath: '../components/CreateArgument',
+        }),
       ]
+    })
+  ]
+})
+
+const usersAPI = (store) => ({
+  path: 'users',
+  childRoutes: [
+
+    asyncRoute({
+      path: 'login',
+      componentPath: '../components/Login'
     }),
 
-    mirroredRoute({
-      path: 'feed',
-      componentPath: '../components/Feed',
-      mapResponseToProps: (resp) => {feed: JSON.parse(resp.body)},
+    asyncRoute({
+      path: 'logout',
+      componentPath: '../components/Logout'
     }),
 
-    mirroredRoute({
-      path: 'users/:userid',
-      componentPath: '../components/User',
-      mapResponseToProps: (resp) => {user: JSON.parse(resp.body)},
-    }),
+    asyncRoute({
+      path: ':userid',
+      componentPath: '../components/User'
+    })
+  ]
+})
 
-    // non-mirrored routes
-    (store) => ({
-      path: 'claims/create',
-      component: <CreateClaim />,
-    }),
-
-    (store) => ({
-      path: 'arguments/create',
-      component: <CreateArgument />,
-    }),
-
+export default (store) => ({
+  path: '/',
+  component: <Feed store={store} />,
+  childRoutes: [
+    argumentsAPI,
+    claimsAPI,
+    usersAPI
   ]
 })
 

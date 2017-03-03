@@ -23,8 +23,6 @@ type ClaimsAPI =
   -- POST to /claims to create a new claim
        "claims" :> "create" :> ReqBody '[JSON] Claim :> Post '[JSON] Claim
   
-  :<|> "feed" :> RootEndpoint
-
   -- POST to /claims/:claimid/.. to create arguments for/against it 
   :<|> "claims" :> Capture "claimid" ClaimID :> 
       (    "for" :> ReqBody '[JSON] Argument :> Post '[JSON] Argument
@@ -55,11 +53,9 @@ type UsersAPI =
 
       )
 
-  -- PUT to /users/:userid to update a user's info
-  :<|> "users" :> Capture "userid" UserID :> ReqBody '[JSON] User :> Put '[JSON] User
 
   -- GET to /users to get a page of all users
-  :<|> "users" :> Get '[JSON] AllUsersPage
+  :<|> "users" :> Get '[JSON] [User]
 
 
 type ServerAPI = RootEndpoint 
