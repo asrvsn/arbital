@@ -15,7 +15,6 @@ const styles= {
 const Feed = (props) => {
   return (
     <div style={styles.root}>
-
       <List>
        <Subheader>Feed</Subheader>
         { items.forEach(item => (

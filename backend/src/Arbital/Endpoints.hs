@@ -36,6 +36,13 @@ type ClaimsAPI =
       :<|> Get '[JSON] Claim
       )
 
+  :<|> "claims" :> "items" :> 
+      (    Capture "claimid" ClaimID :>
+
+      :<|> Get '[JSON] [ClaimItem]
+
+      )
+
 type UsersAPI = 
   -- POST to /users to create a new user
        "users" :> "create" :> ReqBody '[JSON] User :> Post '[JSON] User
