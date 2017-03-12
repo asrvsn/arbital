@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import requests from 'requests'
+import request from 'request'
 import Redbox from 'redbox-react'
 
 export default (ChildComponent, getter) => (
@@ -16,7 +16,7 @@ export default (ChildComponent, getter) => (
     componentDidMount() {
       getter(this.props).forEach(item => {
         const {path, mapResponseToProps} = item
-        requests
+        request
           .get(this.backendUrl + path)
           .on('response', response => {
 

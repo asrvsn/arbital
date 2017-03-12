@@ -51,6 +51,15 @@ webpackConfig.externals['react/lib/ReactContext'] = true
 webpackConfig.externals['react/addons'] = true
 
 // ------------------------------------
+// (anand) fix request import issue  https://github.com/request/request/issues/1691
+// ------------------------------------
+webpackConfig.node = {
+  fs: 'empty',
+  net: 'empty',
+  tls: 'empty'
+}
+
+// ------------------------------------
 // Plugins
 // ------------------------------------
 webpackConfig.plugins = [
@@ -64,7 +73,12 @@ webpackConfig.plugins = [
     minify   : {
       collapseWhitespace : true
     }
-  })
+  }),
+  // (anand) Add in react plugin
+  // https://stackoverflow.com/questions/35341994/uncaught-referenceerror-react-is-not-defined
+  new webpack.ProvidePlugin({
+    "React": "react",
+  }),
 ]
 
 // Ensure that the compiler exits on errors during testing so that

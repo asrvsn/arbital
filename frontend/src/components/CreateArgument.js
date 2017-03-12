@@ -18,19 +18,7 @@ class CreateArgument extends Component {
 
   render() {
     const { open } = this.state
-    const { claim, claimItems } = this.props
-
-    const dataSource = claimItems.map(item => ({
-      text: item.claimText,
-      value: (
-        <AuthoredListItem
-          text={item.claimText}
-          authorId={item.claimAuthorId}
-          authorName={item.claimAuthorName}
-          hrefPath={'/claims/' + item.claimId}
-        />
-      )
-    }))
+    const { claimItem } = this.props
 
     return (
       <Dialog
@@ -40,21 +28,12 @@ class CreateArgument extends Component {
         open={open}
         onRequestClose={() => this.close()}
       >
-        { claim === undefined ?
-            <AutoComplete
-              floatingLabelText="Link to a claim"
-              filter={AutoComplete.fuzzyFilter}
-              dataSource={dataSource}
-              maxSearchResults={5}
-            />
-          :
-            <AuthoredListItem
-              text={claim.claimText}
-              authorId={claim.claimAuthorId}
-              authorName={claim.claimAuthorName}
-              hrefPath={'/claims/' + claim.claimId}
-            />
-        }
+        <AuthoredListItem
+          text={claimItem.claimText}
+          authorId={claimItem.claimAuthorId}
+          authorName={claimItem.claimAuthorName}
+          hrefPath={'/claims/' + claimItem.claimId}
+        />
 
       </Dialog>
     )
@@ -71,22 +50,10 @@ class CreateArgument extends Component {
 
 export default GetterHOC(
   CreateArgument,
-  (props) => {
-    const { claimId } = props
-    if (claimId === undefined) {
-      return [
-        {
-          path: '/claims/items',
-          mapResponseToProps: (resp) => {claimItems: JSON.parse(resp.body)}
-        }
-      ]
-    } else {
-      return [
-        {
-          path: '/claims/items/' + claimId,
-          mapResponseToProps: (resp) => {claim: JSON.parse(resp.body)}
-        }
-      ]
+  (props) => ([
+    {
+      path: '/claims/items' + props.claimId,
+      mapResponseToProps: (resp) => {claimItem: JSON.parse(resp.body)}
     }
-  }
+  ])
 )
