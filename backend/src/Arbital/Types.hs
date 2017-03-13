@@ -1,64 +1,170 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings #-}
 
-module Arbital.Types where
+module Arbital.Types 
+  (
+  -- * Users
+    UserID(..)
+  , User(..)
+  -- * Claims
+  , ClaimID(..)
+  , Claim(..)
+  , ClaimItem(..)
+  -- * Arguments
+  , ArgumentID(..)
+  , Argument(..)
+  , ArgumentItem(..)
+  -- * Commits
+  , CommitID(..)
+  , Commit(..)
+  , CommitAction(..)
+  ) where
 
 import GHC.Generics
 
-import Data.Aeson (ToJSON, FromJSON)
+import Data.Aeson
 import Data.Text (Text)
 import Data.Time (UTCTime)
+import Web.HttpApiData
+
+-- * Users
 
 newtype UserID = UserID Text deriving (Generic)
 
 instance ToJSON UserID
 instance FromJSON UserID
 
+instance FromHttpApiData UserID where
+  parseUrlPiece = Right . UserID
+
 data User = User 
   { userId :: UserID
-  , email :: Text
-  , name :: Text
+  , userEmail :: Text
+  , userName :: Text
   , registrationDate :: UTCTime
-  }
+  } 
+
+instance ToJSON User where
+  toJSON u = object [ "id" .= userId u
+                    , "email" .= userEmail u
+                    , "name" .= userName u
+                    , "registrationDate" .= registrationDate u
+                    ]
+instance FromJSON User where
+  parseJSON = withObject "user" $ \v -> 
+    User <$> v .: "id"
+         <*> v .: "email"
+         <*> v .: "name"
+         <*> v .: "registrationDate"
+
+-- * Claims
 
 newtype ClaimID = ClaimID Text deriving (Generic)
 
 instance ToJSON ClaimID
 instance FromJSON ClaimID
 
+instance FromHttpApiData ClaimID where
+  parseUrlPiece = Right . ClaimID
+
 data Claim = Claim
   { claimText :: Text
   , argsFor :: [ArgumentID]
   , argsAgainst :: [ArgumentID]
-  , claimOwner :: UserID
+  , claimAuthorId :: UserID
   , claimCreationDate :: UTCTime
   , claimId :: ClaimID
-  } deriving (Generic)
+  } 
 
-instance ToJSON Claim
-instance FromJSON Claim
+instance ToJSON Claim where
+  toJSON c = object [ "text" .= claimText c
+                    , "argsFor" .= argsFor c
+                    , "argsAgainst" .= argsAgainst c
+                    , "authorId" .= claimAuthorId c
+                    , "creationDate" .= claimCreationDate c
+                    , "id" .= claimId c
+                    ]
+instance FromJSON Claim where
+  parseJSON = withObject "claim" $ \v -> 
+    Claim <$> v .: "text"
+          <*> v .: "argsFor"
+          <*> v .: "argsAgainst"
+          <*> v .: "authorId"
+          <*> v .: "creationDate"
+          <*> v .: "id"
+
+data ClaimItem = ClaimItem
+  { iClaimText :: Text
+  , iClaimAuthorId :: UserID
+  , iClaimAuthorName :: Text
+  , iClaimId :: ClaimID
+  }
+
+instance ToJSON ClaimItem where
+  toJSON c = object [ "text" .= iClaimText c
+                    , "authorId" .= iClaimAuthorId c
+                    , "authorName" .= iClaimAuthorName c
+                    , "id" .= iClaimId c
+                    ]
+
+-- * Arguments
 
 newtype ArgumentID = ArgumentID Text deriving (Generic)
 
 instance ToJSON ArgumentID
 instance FromJSON ArgumentID
 
+instance FromHttpApiData ArgumentID where
+  parseUrlPiece = Right . ArgumentID
+
 data Argument = Argument 
   { argumentSummary :: Text
-  , argumentBody :: [ClaimID]
-  , argumentOwner :: UserID
+  , argumentClaims :: [ClaimID]
+  , argumentAuthorId :: UserID
   , argumentCreationDate :: UTCTime
-  , argumentID :: ArgumentID
-  } deriving (Generic)
+  , argumentId :: ArgumentID
+  } 
 
-instance ToJSON Argument
-instance FromJSON Argument
+instance ToJSON Argument where
+  toJSON a = object [ "text" .= argumentSummary a
+                    , "claims" .= argumentClaims a
+                    , "authorId" .= argumentAuthorId a
+                    , "creationDate" .= argumentCreationDate a
+                    , "id" .= argumentId a
+                    ]
+instance FromJSON Argument where
+  parseJSON = withObject "argument" $ \v -> 
+    Argument <$> v .: "text" 
+             <*> v .: "claims"
+             <*> v .: "authorId"
+             <*> v .: "creationDate"
+             <*> v .: "id"
+
+data ArgumentItem = ArgumentItem 
+  { iArgumentSummary :: Text
+  , iArgumentAuthorId :: UserID
+  , iArgumentAuthorName :: Text
+  , iArgumentId :: ArgumentID
+  } 
+
+instance ToJSON ArgumentItem where
+  toJSON a = object [ "text" .= iArgumentSummary a
+                    , "authorId" .= iArgumentAuthorId a
+                    , "authorName" .= iArgumentAuthorName a
+                    , "id" .= iArgumentId a
+                    ]
+
+-- * Commits
+
+newtype CommitID = CommitID Text
 
 data Commit = Commit 
   { commitAuthor :: UserID
   , commitAction :: CommitAction
   , commitCreationDate :: UTCTime
   , commitMessage :: Text
+  , commitId :: CommitID
   }
 
 data CommitAction = 

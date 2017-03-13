@@ -16,13 +16,16 @@ cabal-version:       >=1.10
 library
   hs-source-dirs:      src
   exposed-modules:     Arbital.Endpoints
+                       Arbital.Endpoints.Users
+                       Arbital.Endpoints.Claims
+                       Arbital.Endpoints.Arguments
                        Arbital.Types
-                       Arbital.Handlers
   build-depends:       base >= 4.7 && < 5
                      , time
                      , text
-                     , servant
+                     , servant-server
                      , aeson
+                     , http-api-data
   default-language:    Haskell2010
   ghc-options:         -fprof-auto
                        -Wall
@@ -37,6 +40,7 @@ executable arbital-exe
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   build-depends:       base
                      , arbital
+                     , warp
   default-language:    Haskell2010
 
 test-suite arbital-test

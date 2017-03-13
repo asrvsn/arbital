@@ -1,5 +1,4 @@
 import React, { Component } from 'react'
-import requests from 'requests'
 
 import Dialog from 'material-ui/Dialog'
 import AutoComplete from 'material-ui/AutoComplete';

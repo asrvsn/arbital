@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 
 import Subheader from 'material-ui/Subheader';
+import List from 'material-ui/List';
 
 import AuthoredListItem from './AuthoredListItem';
 import GetterHOC from '../hoc/GetterHOC'
@@ -13,6 +14,8 @@ const styles= {
 }
 
 const Feed = (props) => {
+  const {items} = props
+
   return (
     <div style={styles.root}>
       <List>

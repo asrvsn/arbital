@@ -1,5 +1,4 @@
 import React, { Component } from 'react'
-import requests from 'requests'
 
 import FlatButton from 'material-ui/FlatButton'
 import Dialog from 'material-ui/Dialog'

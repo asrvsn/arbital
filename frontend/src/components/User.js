@@ -13,7 +13,7 @@ const User = (props) => {
     <Tabs>
       <Tab label="Claims" >
         <List>
-          { claimItems.map(item) => (
+          { claimItems.map(item =>
               <AuthoredListItem
                 text={item.claimText}
                 authorId={item.claimAuthorId}
@@ -26,7 +26,7 @@ const User = (props) => {
       </Tab>
       <Tab label="Arguments" >
         <List>
-          { argumentItems.map(item) => (
+          { argumentItems.map(item =>
               <AuthoredListItem
                 text={item.argumentText}
                 authorId={item.argumentAuthorId}

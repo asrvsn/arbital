@@ -2,13 +2,15 @@ import React, { Component } from 'react'
 import request from 'request'
 import Redbox from 'redbox-react'
 
+import LinearProgress from 'material-ui/LinearProgress';
+
 export default (ChildComponent, getter) => (
   class GetterComponent extends Component {
     constructor(props) {
       super(props)
       this.state = {
         childProps: {},
-        gettingFailed: false
+        gettingState: 'LOADING'
       }
       this.backendUrl = window.location.hostname + '5000'
     }
@@ -28,29 +30,32 @@ export default (ChildComponent, getter) => (
                 mapResponseToProps(response)
               )
 
-              this.setState({childProps: newChildProps})
+              this.setState({childProps: newChildProps, gettingState: 'SUCCEEDED'})
 
             } else {
-              this.setState({gettingFailed: true})
+              this.setState({gettingState: 'FAILED'})
+              console.error(response)
             }
           })
       })
     }
 
     render() {
-      const { childProps, gettingFailed } = this.state
+      const { childProps, gettingState } = this.state
 
-      if (gettingFailed) {
+      switch(gettingState) {
+        case 'LOADING':
+          return <LinearProgress mode="indeterminate" />
+        case 'FAILED':
+          return <RedBox error={"Failed to fetch data from the backend"} />
+        case 'SUCCEEDED': {
+          const allChildProps = Object.assign({},
+            this.props,
+            childProps
+          )
+          return <ChildComponent {...allChildProps} />
+        }
 
-        return <RedBox error={"Failed to fetch data from the backend"} />
-
-      } else {
-
-        const allChildProps = Object.assign({},
-          this.props,
-          childProps
-        )
-        return <ChildComponent {...allChildProps} />
       }
     }
   }
