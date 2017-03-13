@@ -34,18 +34,20 @@ type ServerAPI =
 serverAPI :: Proxy ServerAPI
 serverAPI = Proxy
 
-app :: Application
-app = serveWithContext serverAPI authContext server
+app :: AppState -> Application
+app r = serveWithContext serverAPI authContext (server r)
 
-privateServer :: Session -> Server PrivateAPI
+server :: AppState -> Server ServerAPI
+server r = enter (appToUnderlying r) appServer
+  where
+    appServer = privateServer :<|> publicServer
+
+privateServer :: Session -> ServerT PrivateAPI App
 privateServer _ = 
         rootServer
   :<|>  argumentsServer
   :<|>  claimsServer
   :<|>  usersServer
 
-publicServer :: Server PublicAPI
+publicServer :: ServerT PublicAPI App
 publicServer = login
-
-server :: Server ServerAPI
-server = privateServer :<|> publicServer

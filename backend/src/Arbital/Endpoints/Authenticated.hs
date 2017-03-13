@@ -88,7 +88,7 @@ login = \case
         
 authHandler :: AuthHandler Request Session
 authHandler = mkAuthHandler $ \req -> 
-  case lookup "servant-auth-cookie" (requestHeaders req) of
+  case lookup "servant-session-id" (requestHeaders req) of
     Nothing -> throwError (err401 { errBody = "Missing auth header" })
     Just sessionId -> lookupSession (SessionID $ decodeUtf8 sessionId)
 
