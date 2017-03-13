@@ -5,7 +5,8 @@
 module Arbital.Types 
   (
   -- * Users
-    UserID(..)
+    Email(..)
+  , UserID
   , User(..)
   -- * Claims
   , ClaimID(..)
@@ -30,13 +31,15 @@ import Web.HttpApiData
 
 -- * Users
 
-newtype UserID = UserID Text deriving (Generic)
+newtype Email = Email Text deriving (Generic)
 
-instance ToJSON UserID
-instance FromJSON UserID
+instance ToJSON Email
+instance FromJSON Email
 
-instance FromHttpApiData UserID where
-  parseUrlPiece = Right . UserID
+instance FromHttpApiData Email where
+  parseUrlPiece = Right . Email
+
+type UserID = Email
 
 data User = User 
   { userId :: UserID
