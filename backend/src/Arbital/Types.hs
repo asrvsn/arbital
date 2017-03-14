@@ -79,9 +79,9 @@ data Session = Session
   }
 
 instance ToJSON Session where
-  toJSON s = object [ "sessionId" .= sessionId s
-                    , "sessionUser" .= sessionUser s
-                    , "sessionCreated" .= sessionCreated s
+  toJSON s = object [ "id" .= sessionId s
+                    , "user" .= sessionUser s
+                    , "created" .= sessionCreated s
                     ]
 
 setLastUsed :: UTCTime -> Session -> Session
@@ -98,43 +98,43 @@ instance FromHttpApiData ClaimID where
   parseUrlPiece = Right . ClaimID
 
 data Claim = Claim
-  { claimText :: Text
+  { claimId :: ClaimID
+  , claimText :: Text
   , argsFor :: [ArgumentID]
   , argsAgainst :: [ArgumentID]
   , claimAuthorId :: UserID
   , claimCreationDate :: UTCTime
-  , claimId :: ClaimID
   } 
 
 instance ToJSON Claim where
-  toJSON c = object [ "text" .= claimText c
+  toJSON c = object [ "id" .= claimId c
+                    , "text" .= claimText c
                     , "argsFor" .= argsFor c
                     , "argsAgainst" .= argsAgainst c
                     , "authorId" .= claimAuthorId c
                     , "creationDate" .= claimCreationDate c
-                    , "id" .= claimId c
                     ]
 instance FromJSON Claim where
   parseJSON = withObject "claim" $ \v -> 
-    Claim <$> v .: "text"
+    Claim <$> v .: "id"
+          <*> v .: "text"
           <*> v .: "argsFor"
           <*> v .: "argsAgainst"
           <*> v .: "authorId"
           <*> v .: "creationDate"
-          <*> v .: "id"
 
 data ClaimItem = ClaimItem
-  { iClaimText :: Text
+  { iClaimId :: ClaimID
+  , iClaimText :: Text
   , iClaimAuthorId :: UserID
   , iClaimAuthorName :: Text
-  , iClaimId :: ClaimID
   }
 
 instance ToJSON ClaimItem where
-  toJSON c = object [ "text" .= iClaimText c
+  toJSON c = object [ "id" .= iClaimId c
+                    , "text" .= iClaimText c
                     , "authorId" .= iClaimAuthorId c
                     , "authorName" .= iClaimAuthorName c
-                    , "id" .= iClaimId c
                     ]
 
 -- * Arguments
@@ -148,40 +148,40 @@ instance FromHttpApiData ArgumentID where
   parseUrlPiece = Right . ArgumentID
 
 data Argument = Argument 
-  { argumentSummary :: Text
+  { argumentId :: ArgumentID
+  , argumentSummary :: Text
   , argumentClaims :: [ClaimID]
   , argumentAuthorId :: UserID
   , argumentCreationDate :: UTCTime
-  , argumentId :: ArgumentID
   } 
 
 instance ToJSON Argument where
-  toJSON a = object [ "text" .= argumentSummary a
+  toJSON a = object [ "id" .= argumentId a
+                    , "text" .= argumentSummary a
                     , "claims" .= argumentClaims a
                     , "authorId" .= argumentAuthorId a
                     , "creationDate" .= argumentCreationDate a
-                    , "id" .= argumentId a
                     ]
 instance FromJSON Argument where
   parseJSON = withObject "argument" $ \v -> 
-    Argument <$> v .: "text" 
+    Argument <$> v .: "id"
+             <*> v .: "text" 
              <*> v .: "claims"
              <*> v .: "authorId"
              <*> v .: "creationDate"
-             <*> v .: "id"
 
 data ArgumentItem = ArgumentItem 
-  { iArgumentSummary :: Text
+  { iArgumentId :: ArgumentID
+  , iArgumentSummary :: Text
   , iArgumentAuthorId :: UserID
   , iArgumentAuthorName :: Text
-  , iArgumentId :: ArgumentID
   } 
 
 instance ToJSON ArgumentItem where
-  toJSON a = object [ "text" .= iArgumentSummary a
+  toJSON a = object [ "id" .= iArgumentId a
+                    , "text" .= iArgumentSummary a
                     , "authorId" .= iArgumentAuthorId a
                     , "authorName" .= iArgumentAuthorName a
-                    , "id" .= iArgumentId a
                     ]
 
 -- * Commits
@@ -189,11 +189,11 @@ instance ToJSON ArgumentItem where
 newtype CommitID = CommitID Text
 
 data Commit = Commit 
-  { commitAuthor :: UserID
+  { commitId :: CommitID
+  , commitAuthor :: UserID
   , commitAction :: CommitAction
   , commitCreationDate :: UTCTime
   , commitMessage :: Text
-  , commitId :: CommitID
   }
 
 data CommitAction = 

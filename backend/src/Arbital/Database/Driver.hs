@@ -1,5 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 module Arbital.Database.Driver 
   ( 
@@ -7,23 +10,37 @@ module Arbital.Database.Driver
     Connection
   , openConnection
   , closeConnection
-  -- * Persistent typeclass
+  -- * SQL internals
+  , PSQLType(..)
+  , param
+  -- * SQL API
+  , createTable
+  , select
+  , insert
+  , update
+  , delete
   ) where
 
 import           Data.Monoid
 import           Data.Functor.Contravariant
 import           Data.Time.Clock (UTCTime)
+import           Data.Proxy
 import           Data.Text (Text)
-import qualified Data.Text as T
+import           Data.ByteString (ByteString)
+import qualified Data.ByteString as B
+import qualified Data.ByteString.Char8 as BC
 import           Data.Foldable (foldl')
 import qualified Data.Aeson as A
 import           Control.Monad (replicateM)
+import           Control.Monad.Except (throwError)
 import           Hasql.Connection
 import           Hasql.Query
+import           Hasql.Session
 import qualified Hasql.Encoders as Enc
 import qualified Hasql.Decoders as Dec
 
-import           Arbital.Types
+import           Arbital.Types hiding (Session)
+import qualified Arbital.Types as Ty
 
 -- * Config
 
@@ -92,17 +109,17 @@ instance Persistent User where
 
 -- ** Sessions
 
-instance Persistent SessionID where
-  enc = contramap (\(SessionID s) -> s) enc
-  dec = SessionID <$> dec
+instance Persistent Ty.SessionID where
+  enc = contramap (\(Ty.SessionID s) -> s) enc
+  dec = Ty.SessionID <$> dec
 
-instance Persistent Session where
+instance Persistent Ty.Session where
   enc =
-        contramap sessionId enc
-    <>  contramap sessionUser enc
-    <>  contramap sessionCreated enc
-    <>  contramap sessionLastUsed enc
-  dec = Session
+        contramap Ty.sessionId enc
+    <>  contramap Ty.sessionUser enc
+    <>  contramap Ty.sessionCreated enc
+    <>  contramap Ty.sessionLastUsed enc
+  dec = Ty.Session
     <$> dec
     <*> dec 
     <*> dec
@@ -120,17 +137,17 @@ instance ValuePersistent ClaimID where
 
 instance Persistent Claim where
   enc = 
-        contramap claimText enc
+        contramap claimId enc
+    <>  contramap claimText enc
     <>  contramap argsFor (Enc.value encVal)
     <>  contramap argsAgainst (Enc.value encVal)
     <>  contramap claimAuthorId enc
     <>  contramap claimCreationDate enc
-    <>  contramap claimId enc
   dec = Claim
     <$> dec
-    <*> Dec.value decVal
-    <*> Dec.value decVal
     <*> dec
+    <*> Dec.value decVal
+    <*> Dec.value decVal
     <*> dec
     <*> dec
 
@@ -146,15 +163,15 @@ instance ValuePersistent ArgumentID where
 
 instance Persistent Argument where
   enc = 
-        contramap argumentSummary enc
+        contramap argumentId enc
+    <>  contramap argumentSummary enc
     <>  contramap argumentClaims (Enc.value encVal)
     <>  contramap argumentAuthorId enc
     <>  contramap argumentCreationDate enc
-    <>  contramap argumentId enc
   dec = Argument 
     <$> dec
-    <*> Dec.value decVal
     <*> dec
+    <*> Dec.value decVal
     <*> dec
     <*> dec
 
@@ -166,11 +183,11 @@ instance Persistent CommitID where
 
 instance Persistent Commit where
   enc = 
-        contramap commitAuthor enc
+        contramap commitId enc
+    <>  contramap commitAuthor enc
     <>  contramap commitAction enc
     <>  contramap commitCreationDate enc
     <>  contramap commitMessage enc
-    <>  contramap commitId enc
   dec = Commit
     <$> dec
     <*> dec
@@ -212,39 +229,145 @@ data PSQLType
   | PTimeStampTZ
   | PTime
   | PTimeTZ
+  | PArray PSQLType
+  | PJSON
 
-instance Persistent PSQLType where
-  enc = contramap to enc
-    where
-      to = \case
-        PChar s -> sized "char" s
-        PVarChar s -> sized "varchar" s
-        PText -> "text"
-        PBit s -> sized "bit" s
-        PVarBit s -> sized "varbit" s
-        PSmallInt -> "smallint"
-        PInt -> "int"
-        PInteger -> "integer"
-        PBigInt -> "bigint"
-        PSmallSerial -> "smallserial"
-        PSerial -> "serial"
-        PBigSerial -> "bigserial"
-        PNumeric m d -> "numeric(" <> tshow m <> "," <> tshow d <> ")" 
-        PDouble -> "double precision"
-        PReal -> "real"
-        PMoney -> "money"
-        PBool -> "bool"
-        PDate -> "date"
-        PTimeStamp -> "timestamp"
-        PTimeStampTZ -> "timestamptz"
-        PTime -> "time"
-        PTimeTZ -> "timetz"
-      tshow = T.pack . show
-      sized tag s = tag <> "(" <> tshow s <> ")" 
-  dec = undefined -- TODO
+psTypeShow :: PSQLType -> ByteString
+psTypeShow = \case
+  PChar s -> sized "char" s
+  PVarChar s -> sized "varchar" s
+  PText -> "text"
+  PBit s -> sized "bit" s
+  PVarBit s -> sized "varbit" s
+  PSmallInt -> "smallint"
+  PInt -> "int"
+  PInteger -> "integer"
+  PBigInt -> "bigint"
+  PSmallSerial -> "smallserial"
+  PSerial -> "serial"
+  PBigSerial -> "bigserial"
+  PNumeric m d -> "numeric(" <> tshow m <> "," <> tshow d <> ")" 
+  PDouble -> "double precision"
+  PReal -> "real"
+  PMoney -> "money"
+  PBool -> "bool"
+  PDate -> "date"
+  PTimeStamp -> "timestamp"
+  PTimeStampTZ -> "timestamptz"
+  PTime -> "time"
+  PTimeTZ -> "timetz"
+  PArray p -> psTypeShow p <> "[]"
+  PJSON -> "json"
+  where
+    tshow = BC.pack . show
+    sized tag s = tag <> "(" <> tshow s <> ")" 
 
-data Field = Field { columnName :: Text, columnType :: PSQLType }
+data Field = Field { columnName :: ByteString, columnType :: PSQLType }
+
+fieldShow :: Field -> ByteString
+fieldShow f = columnName f <> " " <> psTypeShow (columnType f)
+
+param :: Int -> ByteString
+param n = "$" <> BC.pack (show n)
 
 -- * SQL API
 
--- createTable :: Text -> [Field] -> 
+class HasTable a where 
+  type Id a 
+  tableName :: Proxy a -> ByteString
+  tableFields :: Proxy a -> [Field] -- ^ The first field is assumed to be the ID field.
+
+-- | The first field is assumed to be the ID field.
+idField :: (HasTable a) => Proxy a -> ByteString
+idField p = case tableFields p of 
+  [] -> error "HasTable got no fields"
+  (f:_) -> columnName f
+
+createTable :: (HasTable a) => Proxy a -> Session ()
+createTable p = case tableFields p of 
+  [] -> pure ()
+  fs -> sql $ "CREATE TABLE " <> tableName p <> " (" <> fs' <> ")"
+    where
+      fs' = B.intercalate "," (map fieldShow fs)
+
+select :: (HasTable a, Persistent (Id a), Persistent a) => Proxy a -> Id a -> Session (Maybe a)
+select p i = query i q
+  where
+    q = statement cmd encoder decoder True
+    cmd =
+      "select * from " <> tableName p <> " where " <> idField p <> " = $1"
+    encoder = enc
+    decoder = Dec.maybeRow dec
+
+insert :: (HasTable a, Persistent a) => Proxy a -> a -> Session ()
+insert p a = query a q
+  where
+    q = statement cmd encoder decoder True
+    cmd = 
+      "insert into " <> tableName p <> " values $1"
+    encoder = enc
+    decoder = Dec.unit
+
+update :: (HasTable a, Persistent (Id a), Persistent a) => Proxy a -> Id a -> (a -> a) -> Session ()
+update p i f = do
+  ma_ <- select p i
+  case ma_ of 
+    Nothing -> throwError $ ResultError $ UnexpectedResult "update: value not found"
+    Just a_ -> do
+      delete p i
+      insert p (f a_)
+
+delete :: (HasTable a, Persistent (Id a)) => Proxy a -> Id a -> Session ()
+delete p i = query i q
+  where
+    q = statement cmd encoder decoder True
+    cmd = 
+      "delete from " <> tableName p <> " where " <> idField p <> " = $1"
+    encoder = enc
+    decoder = Dec.unit
+
+-- * SQL instances 
+
+instance HasTable User where
+  type Id User = UserID
+  tableName _ = "users"
+  tableFields _ = 
+    [ Field "id" PText
+    , Field "email" PText
+    , Field "name" PText
+    , Field "registrationDate" PTimeStampTZ
+    ]
+
+instance HasTable Claim where
+  type Id Claim = ClaimID
+  tableName _ = "claims"
+  tableFields _ = 
+      [ Field "id" PText
+      , Field "text" PText
+      , Field "argsFor" (PArray PText)
+      , Field "argsAgainst" (PArray PText)
+      , Field "authorId" PText
+      , Field "creationDate" PTimeStampTZ
+      ]
+
+instance HasTable Argument where
+  type Id Argument = ArgumentID
+  tableName _ = "arguments"
+  tableFields _ = 
+    [ Field "id" PText
+    , Field "text" PText
+    , Field "claims" (PArray PText)
+    , Field "authorId" PText
+    , Field "creationDate" PTimeStampTZ
+    ]
+
+instance HasTable Commit where
+  type Id Commit = CommitID
+  tableName _ = "commits"
+  tableFields _ = 
+    [ Field "id" PText
+    , Field "authorId" PText
+    , Field "action" PJSON
+    , Field "creationDate" PTimeStampTZ
+    , Field "message" PText
+    ]
