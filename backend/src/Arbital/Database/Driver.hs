@@ -8,11 +8,12 @@ module Arbital.Database.Driver
   ( 
   -- * Config
     Connection
+  , DbSession
   , openConnection
   , closeConnection
-  -- * SQL internals
-  , PSQLType(..)
-  , param
+  , runDb
+  , Error(..)
+  , ResultError(..)
   -- * SQL API
   , createTable
   , select
@@ -28,7 +29,6 @@ import           Data.Proxy
 import           Data.Text (Text)
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
-import qualified Data.ByteString.Char8 as BC
 import           Data.Foldable (foldl')
 import qualified Data.Aeson as A
 import           Control.Monad (replicateM)
@@ -44,6 +44,8 @@ import qualified Arbital.Types as Ty
 
 -- * Config
 
+type DbSession = Session
+
 openConnection :: IO (Either ConnectionError Connection)
 openConnection = acquire dbSettings 
 
@@ -52,6 +54,9 @@ closeConnection = release
 
 dbSettings :: Settings
 dbSettings = settings "localhost" 5432 "anand" "" "arbital"
+
+runDb :: Session a -> Connection -> IO (Either Error a)
+runDb = run
 
 -- * Persistent typeclass
 
@@ -207,11 +212,11 @@ instance Persistent CommitAction where
 -- * PSQL types
 
 data PSQLType 
-  = PChar { size :: Int }
-  | PVarChar { size :: Int }
-  | PText
-  | PBit { size :: Int }
-  | PVarBit { size :: Int }
+  -- = PChar { size :: Int }
+  -- | PVarChar { size :: Int }
+  = PText
+  -- | PBit { size :: Int }
+  -- | PVarBit { size :: Int }
   | PSmallInt
   | PInt 
   | PInteger
@@ -219,7 +224,7 @@ data PSQLType
   | PSmallSerial
   | PSerial
   | PBigSerial
-  | PNumeric { totalDigits :: Int, decimalDigits :: Int }
+  -- | PNumeric { totalDigits :: Int, decimalDigits :: Int }
   | PDouble
   | PReal
   | PMoney
@@ -234,11 +239,11 @@ data PSQLType
 
 psTypeShow :: PSQLType -> ByteString
 psTypeShow = \case
-  PChar s -> sized "char" s
-  PVarChar s -> sized "varchar" s
+  -- PChar s -> sized "char" s
+  -- PVarChar s -> sized "varchar" s
   PText -> "text"
-  PBit s -> sized "bit" s
-  PVarBit s -> sized "varbit" s
+  -- PBit s -> sized "bit" s
+  -- PVarBit s -> sized "varbit" s
   PSmallInt -> "smallint"
   PInt -> "int"
   PInteger -> "integer"
@@ -246,7 +251,7 @@ psTypeShow = \case
   PSmallSerial -> "smallserial"
   PSerial -> "serial"
   PBigSerial -> "bigserial"
-  PNumeric m d -> "numeric(" <> tshow m <> "," <> tshow d <> ")" 
+  -- PNumeric m d -> "numeric(" <> tshow m <> "," <> tshow d <> ")" 
   PDouble -> "double precision"
   PReal -> "real"
   PMoney -> "money"
@@ -259,16 +264,16 @@ psTypeShow = \case
   PArray p -> psTypeShow p <> "[]"
   PJSON -> "json"
   where
-    tshow = BC.pack . show
-    sized tag s = tag <> "(" <> tshow s <> ")" 
+    -- tshow = BC.pack . show
+    -- sized tag s = tag <> "(" <> tshow s <> ")" 
 
 data Field = Field { columnName :: ByteString, columnType :: PSQLType }
 
 fieldShow :: Field -> ByteString
 fieldShow f = columnName f <> " " <> psTypeShow (columnType f)
 
-param :: Int -> ByteString
-param n = "$" <> BC.pack (show n)
+-- param :: Int -> ByteString
+-- param n = "$" <> BC.pack (show n)
 
 -- * SQL API
 
