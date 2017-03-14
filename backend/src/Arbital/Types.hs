@@ -47,7 +47,7 @@ type UserID = Email
 
 data User = User 
   { userId :: UserID
-  , userEmail :: Text
+  , userEmail :: Email
   , userName :: Text
   , registrationDate :: UTCTime
   } 

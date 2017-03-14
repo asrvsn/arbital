@@ -44,7 +44,7 @@ server r = enter (appToUnderlying r) appServer
     appServer = privateServer :<|> publicServer
 
 privateServer :: Session -> ServerT PrivateAPI App
-privateServer _ = 
+privateServer _ = -- TODO 
         rootServer
   :<|>  argumentsServer
   :<|>  claimsServer

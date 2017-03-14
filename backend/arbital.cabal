@@ -42,6 +42,7 @@ library
                      , containers
                      , stm
                      , mtl
+                     , contravariant
   default-language:    Haskell2010
   ghc-options:         -fprof-auto
                        -Wall
