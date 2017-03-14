@@ -9,18 +9,19 @@ module Arbital.Endpoints.Arguments
 import Servant
 
 import Arbital.Types
+import Arbital.State
 
 type ArgumentsAPI = 
        "arguments" :> Capture "argumentid" ArgumentID :> "items" :> Get '[JSON] [ClaimItem]
 
   :<|> "arguments" :> Capture "argumentid" ArgumentID :> Get '[JSON] Argument
 
-argumentsServer :: Server ArgumentsAPI
+argumentsServer :: ServerT ArgumentsAPI App
 argumentsServer = 
   getArgumentClaims :<|> getArgument
 
-getArgumentClaims :: ArgumentID -> Handler [ClaimItem]
+getArgumentClaims :: ArgumentID -> App [ClaimItem]
 getArgumentClaims = undefined
 
-getArgument :: ArgumentID -> Handler Argument
+getArgument :: ArgumentID -> App Argument
 getArgument = undefined

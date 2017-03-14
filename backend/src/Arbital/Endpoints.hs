@@ -9,6 +9,7 @@ import Servant
 import Servant.Server (serveWithContext)
 
 import Arbital.Types
+import Arbital.State
 import Arbital.Endpoints.Arguments
 import Arbital.Endpoints.Claims
 import Arbital.Endpoints.Users
@@ -17,7 +18,7 @@ import Arbital.Endpoints.Authenticated
 -- GET to / to get a page of all claims
 type RootAPI = Get '[JSON] [ClaimItem]
 
-rootServer :: Server RootAPI
+rootServer :: ServerT RootAPI App
 rootServer = getAllClaimItems
 
 type PrivateAPI = RootAPI 
@@ -35,7 +36,7 @@ serverAPI :: Proxy ServerAPI
 serverAPI = Proxy
 
 app :: AppState -> Application
-app r = serveWithContext serverAPI authContext (server r)
+app r = serveWithContext serverAPI (authContext r) (server r)
 
 server :: AppState -> Server ServerAPI
 server r = enter (appToUnderlying r) appServer

@@ -33,7 +33,9 @@ import           Servant.Server ( Context ((:.)
                                 , err401
                                 , errBody
                                 )
+
 import           Arbital.Types
+import           Arbital.State
 import           Arbital.Constants 
 import qualified Arbital.Database.User as UserDB
 
@@ -74,21 +76,22 @@ login = \case
         Left err -> gapiError $ "error decoding response: " ++ err 
       Nothing -> gapiError "received no response body"
         
-authHandler :: AuthHandler Request Session
-authHandler = mkAuthHandler $ \req -> 
+authHandler :: AppState -> AuthHandler Request Session
+authHandler r = mkAuthHandler $ \req -> 
   case lookup "servant-session-id" (requestHeaders req) of
     Nothing -> throwError (err401 { errBody = "Missing auth header" })
-    Just sessionId -> do
-      ms <- useSession $ SessionID (decodeUtf8 sessionId)
-      case ms of
+    Just s -> do
+      mse <- runAppT r $ 
+        useSession $ SessionID (decodeUtf8 s)
+      case mse of
         Nothing -> throwError (err401 { errBody = "Session not found" })
-        Just s -> return s
+        Just se -> return se
 
 -- | The context that will be made available to request handlers. We supply the
 -- "cookie-auth"-tagged request handler defined above, so that the 'HasServer' instance
 -- of 'AuthProtect' can extract the handler and run it on the request.
-authContext :: Context (AuthHandler Request Session ': '[])
-authContext = authHandler :. EmptyContext
+authContext :: AppState -> Context (AuthHandler Request Session ': '[])
+authContext r = authHandler r :. EmptyContext
   
 -- * Helpers
 

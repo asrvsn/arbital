@@ -57,6 +57,7 @@ executable arbital-exe
   build-depends:       base
                      , arbital
                      , warp
+                     , unix
   default-language:    Haskell2010
 
 test-suite arbital-test

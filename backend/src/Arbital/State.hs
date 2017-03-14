@@ -1,4 +1,5 @@
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE DataKinds #-}
 
 module Arbital.State 
   ( 
@@ -8,10 +9,12 @@ module Arbital.State
   , AppState(..)
   -- * State
   , newAppState
+  , runAppT
   , appToUnderlying
   -- * State manipulation
   , useSession
   , startSession
+  , removeStaleSessions
   , withConnection
   ) where
 
@@ -46,8 +49,11 @@ newAppState c =
   AppState <$> pure c
            <*> newTVarIO Map.empty
 
+runAppT :: AppState -> AppT m a -> m a
+runAppT r m = runReaderT m r
+
 appToUnderlying :: AppState -> AppT m :~> m
-appToUnderlying r = NT $ \m -> runReaderT m r
+appToUnderlying r = Nat (runAppT r)
 
   -- * State manipulation
  

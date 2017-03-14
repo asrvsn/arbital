@@ -9,6 +9,7 @@ module Arbital.Endpoints.Users
 import Servant
 
 import Arbital.Types
+import Arbital.State
 
 type UsersAPI = 
   -- POST to /users to create a new user
@@ -24,7 +25,7 @@ type UsersAPI =
   -- GET to /users to get a page of all users
   :<|> "users" :> Get '[JSON] [User]
 
-usersServer :: Server UsersAPI
+usersServer :: ServerT UsersAPI App
 usersServer = 
         createUser
   :<|>  getUserArgumentItems
@@ -32,17 +33,17 @@ usersServer =
   :<|>  getUser
   :<|>  getAllUsers
 
-createUser :: User -> Handler User 
+createUser :: User -> App User 
 createUser = undefined
 
-getUserArgumentItems :: UserID -> Handler [ArgumentItem]
+getUserArgumentItems :: UserID -> App [ArgumentItem]
 getUserArgumentItems = undefined
 
-getUserClaimItems :: UserID -> Handler [ClaimItem]
+getUserClaimItems :: UserID -> App [ClaimItem]
 getUserClaimItems = undefined 
 
-getUser :: UserID -> Handler User
+getUser :: UserID -> App User
 getUser = undefined
 
-getAllUsers :: Handler [User]
+getAllUsers :: App [User]
 getAllUsers = undefined

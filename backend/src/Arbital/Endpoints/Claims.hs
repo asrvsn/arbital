@@ -10,6 +10,7 @@ module Arbital.Endpoints.Claims
 import Servant
 
 import Arbital.Types
+import Arbital.State
 
 type ClaimsAPI = 
   -- POST to /claims to create a new claim
@@ -29,7 +30,7 @@ type ClaimsAPI =
 
   :<|> "claims" :> "items" :> Get '[JSON] [ClaimItem]
 
-claimsServer :: Server ClaimsAPI
+claimsServer :: ServerT ClaimsAPI App
 claimsServer = 
         createClaim
   :<|>  createArgumentFor
@@ -39,23 +40,23 @@ claimsServer =
   :<|>  getClaimItem
   :<|>  getAllClaimItems
 
-createClaim :: Claim -> Handler Claim
+createClaim :: Claim -> App Claim
 createClaim = undefined
 
-createArgumentFor :: ClaimID -> Argument -> Handler Argument
+createArgumentFor :: ClaimID -> Argument -> App Argument
 createArgumentFor = undefined
 
-createArgumentAgainst :: ClaimID -> Argument -> Handler Argument
+createArgumentAgainst :: ClaimID -> Argument -> App Argument
 createArgumentAgainst = undefined 
 
-getClaimArguments :: ClaimID -> Handler [ArgumentItem]
+getClaimArguments :: ClaimID -> App [ArgumentItem]
 getClaimArguments = undefined
 
-getClaim :: ClaimID -> Handler Claim
+getClaim :: ClaimID -> App Claim
 getClaim = undefined 
 
-getClaimItem :: ClaimID -> Handler ClaimItem
+getClaimItem :: ClaimID -> App ClaimItem
 getClaimItem = undefined
 
-getAllClaimItems :: Handler [ClaimItem]
+getAllClaimItems :: App [ClaimItem]
 getAllClaimItems = undefined 
