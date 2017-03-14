@@ -210,3 +210,7 @@ data CommitAction =
       { oldUser :: User
       , newUser :: User
       }
+  deriving ( Generic )
+
+instance ToJSON CommitAction
+instance FromJSON CommitAction

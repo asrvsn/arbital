@@ -14,6 +14,7 @@ import           Data.Functor.Contravariant
 import           Data.Time.Clock (UTCTime)
 import           Data.Text (Text)
 import           Data.Foldable (foldl')
+import qualified Data.Aeson as A
 import           Control.Monad (replicateM)
 import           Hasql.Connection
 import qualified Hasql.Encoders as Enc
@@ -106,12 +107,75 @@ instance Persistent ClaimID where
   enc = contramap (\(ClaimID c) -> c) enc
   dec = ClaimID <$> dec
 
--- instance Persistent Claim where
---   enc = 
---         contramap claimText enc
---     <>  contramap argsFor (Enc.array (Enc.arrayValue enc))
---     <>  contramap argsAgainst (Enc.array (Enc.arrayValue enc))
---     <>  contramap claimAuthorId enc
---     <>  contramap claimCreationDate enc
---     <>  contramap claimId enc
---   dec = undefined
+instance ValuePersistent ClaimID where
+  encVal = contramap (\(ClaimID c) -> c) encVal
+  decVal = ClaimID <$> decVal
+
+instance Persistent Claim where
+  enc = 
+        contramap claimText enc
+    <>  contramap argsFor (Enc.value encVal)
+    <>  contramap argsAgainst (Enc.value encVal)
+    <>  contramap claimAuthorId enc
+    <>  contramap claimCreationDate enc
+    <>  contramap claimId enc
+  dec = Claim
+    <$> dec
+    <*> Dec.value decVal
+    <*> Dec.value decVal
+    <*> dec
+    <*> dec
+    <*> dec
+
+-- ** Arguments
+
+instance Persistent ArgumentID where
+  enc = contramap (\(ArgumentID a) -> a) enc
+  dec = ArgumentID <$> dec
+
+instance ValuePersistent ArgumentID where
+  encVal = contramap (\(ArgumentID a) -> a) encVal
+  decVal = ArgumentID <$> decVal
+
+instance Persistent Argument where
+  enc = 
+        contramap argumentSummary enc
+    <>  contramap argumentClaims (Enc.value encVal)
+    <>  contramap argumentAuthorId enc
+    <>  contramap argumentCreationDate enc
+    <>  contramap argumentId enc
+  dec = Argument 
+    <$> dec
+    <*> Dec.value decVal
+    <*> dec
+    <*> dec
+    <*> dec
+
+-- ** Commits
+
+instance Persistent CommitID where
+  enc = contramap (\(CommitID c) -> c) enc
+  dec = CommitID <$> dec
+
+instance Persistent Commit where
+  enc = 
+        contramap commitAuthor enc
+    <>  contramap commitAction enc
+    <>  contramap commitCreationDate enc
+    <>  contramap commitMessage enc
+    <>  contramap commitId enc
+  dec = Commit
+    <$> dec
+    <*> dec
+    <*> dec
+    <*> dec
+    <*> dec
+
+-- #partial
+instance Persistent CommitAction where
+  enc = contramap A.toJSON (Enc.value Enc.json)
+  dec = from <$> Dec.value Dec.json
+    where
+      from a = case A.fromJSON a of 
+        A.Error e -> error $ "Persistent/CommitAction: " ++ e 
+        A.Success s -> s
