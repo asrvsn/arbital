@@ -8,6 +8,10 @@ module Arbital.Types
     Email(..)
   , UserID
   , User(..)
+  -- * Sessions
+  , SessionID(..)
+  , Session(..)
+  , setLastUsed
   -- * Claims
   , ClaimID(..)
   , Claim(..)
@@ -60,6 +64,28 @@ instance FromJSON User where
          <*> v .: "email"
          <*> v .: "name"
          <*> v .: "registrationDate"
+
+-- * Sessions
+
+newtype SessionID = SessionID Text deriving (Generic, Ord, Eq)
+
+instance ToJSON SessionID
+
+data Session = Session 
+  { sessionId :: SessionID
+  , sessionUser :: User
+  , sessionCreated :: UTCTime
+  , sessionLastUsed :: UTCTime
+  }
+
+instance ToJSON Session where
+  toJSON s = object [ "sessionId" .= sessionId s
+                    , "sessionUser" .= sessionUser s
+                    , "sessionCreated" .= sessionCreated s
+                    ]
+
+setLastUsed :: UTCTime -> Session -> Session
+setLastUsed t s = s { sessionLastUsed = t }
 
 -- * Claims
 

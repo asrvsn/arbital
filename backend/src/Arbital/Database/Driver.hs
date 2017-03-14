@@ -1,10 +1,18 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Arbital.Database.Driver 
   ( Connection
-  , newDbConnection
+  , openConnection
+  , closeConnection
   ) where
 
-data Connection
+import Hasql.Connection
 
-newDbConnection :: IO Connection
-newDbConnection = undefined
+openConnection :: IO (Either ConnectionError Connection)
+openConnection = acquire dbSettings 
 
+closeConnection :: Connection -> IO ()
+closeConnection = release
+
+dbSettings :: Settings
+dbSettings = settings "localhost" 5432 "anand" "" "arbital"

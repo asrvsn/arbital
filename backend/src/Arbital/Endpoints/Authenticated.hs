@@ -8,7 +8,6 @@
 
 module Arbital.Endpoints.Authenticated
   ( AuthStrategy(..)
-  , Session(..)
   , login
   , authHandler
   , authContext
@@ -38,17 +37,6 @@ import           Arbital.Types
 import           Arbital.Constants 
 import qualified Arbital.Database.User as UserDB
 
-newtype SessionID = SessionID Text deriving (Generic)
-
-instance ToJSON SessionID
-
-data Session = Session SessionID User
-
-instance ToJSON Session where
-  toJSON (Session s u) = object [ "sessionId" .= s
-                                , "sessionUser" .= u
-                                ]
-
 -- | We need to specify the data returned after authentication
 type instance AuthServerData (AuthProtect "cookie-auth") = Session 
 
@@ -72,7 +60,7 @@ instance FromJSON GoogleAuthResponse where
 
 -- * Exposed
 
-login :: AuthStrategy -> Handler Session
+login :: AuthStrategy -> App Session
 login = \case
   GoogleTokenAuth token -> do
     let url = google_token_verify_url ++ T.unpack token
@@ -81,7 +69,7 @@ login = \case
       Just body -> case eitherDecode body of 
         Right authResp -> do
           if authClientId authResp == T.pack google_app_client_id
-            then getGapiUser authResp >>= makeSession
+            then getGapiUser authResp >>= startSession
             else gapiError "app client id's did not match"
         Left err -> gapiError $ "error decoding response: " ++ err 
       Nothing -> gapiError "received no response body"
@@ -90,7 +78,11 @@ authHandler :: AuthHandler Request Session
 authHandler = mkAuthHandler $ \req -> 
   case lookup "servant-session-id" (requestHeaders req) of
     Nothing -> throwError (err401 { errBody = "Missing auth header" })
-    Just sessionId -> lookupSession (SessionID $ decodeUtf8 sessionId)
+    Just sessionId -> do
+      ms <- useSession $ SessionID (decodeUtf8 sessionId)
+      case ms of
+        Nothing -> throwError (err401 { errBody = "Session not found" })
+        Just s -> return s
 
 -- | The context that will be made available to request handlers. We supply the
 -- "cookie-auth"-tagged request handler defined above, so that the 'HasServer' instance
@@ -100,19 +92,14 @@ authContext = authHandler :. EmptyContext
   
 -- * Helpers
 
-gapiError :: String -> Handler a
+gapiError :: String -> App a
 gapiError err = 
   throwError $ err401 { errBody = BLC.pack $ "gapi-signin: " ++ err}
 
-getGapiUser :: GoogleAuthResponse -> Handler User
+getGapiUser :: GoogleAuthResponse -> App User
 getGapiUser ar = do
-  mUser <- UserDB.get (authEmail ar)
+  mUser <- withConnection $ \c -> UserDB.get c (authEmail ar)
   case mUser of 
     Just user -> return user
-    Nothing -> UserDB.create (authEmail ar) (authName ar)
-
-makeSession :: User -> Handler Session
-makeSession u = return $ Session undefined u 
-
-lookupSession :: SessionID -> Handler Session
-lookupSession s = return $ Session s undefined  
+    Nothing -> withConnection $ \c ->
+      UserDB.create c (authEmail ar) (authName ar)

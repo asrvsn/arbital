@@ -4,9 +4,10 @@ module Arbital.Database.Argument
   ) where
 
 import Arbital.Types
+import Arbital.Database.Driver
     
-get :: ArgumentID -> IO (Maybe Argument)
+get :: Connection -> ArgumentID -> IO (Maybe Argument)
 get = undefined
 
-create :: Argument -> IO Argument
+create :: Connection -> Argument -> IO Argument
 create = undefined

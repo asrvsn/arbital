@@ -4,10 +4,11 @@ module Arbital.Database.Claim
   ) where
 
 import Arbital.Types
+import Arbital.Database.Driver
 
-get :: ClaimID -> IO (Maybe Claim)
+get :: Connection -> ClaimID -> IO (Maybe Claim)
 get = undefined
 
-create :: Claim -> IO Claim
+create :: Connection -> Claim -> IO Claim
 create = undefined
 

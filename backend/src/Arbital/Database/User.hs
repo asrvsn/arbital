@@ -4,12 +4,12 @@ module Arbital.Database.User
   ) where
 
 import Data.Text (Text)
-import Servant
 
 import Arbital.Types
+import Arbital.Database.Driver
 
-get :: UserID -> Handler (Maybe User)
+get :: Connection -> UserID -> IO (Maybe User)
 get = undefined
 
-create :: Email -> Text -> Handler User
+create :: Connection -> Email -> Text -> IO User
 create = undefined
