@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE LambdaCase #-}
 
 module Arbital.Database.Driver 
   ( 
@@ -13,10 +14,12 @@ import           Data.Monoid
 import           Data.Functor.Contravariant
 import           Data.Time.Clock (UTCTime)
 import           Data.Text (Text)
+import qualified Data.Text as T
 import           Data.Foldable (foldl')
 import qualified Data.Aeson as A
 import           Control.Monad (replicateM)
 import           Hasql.Connection
+import           Hasql.Query
 import qualified Hasql.Encoders as Enc
 import qualified Hasql.Decoders as Dec
 
@@ -64,6 +67,10 @@ instance Persistent Text where
 instance (ValuePersistent a) => ValuePersistent [a] where
   encVal = Enc.array (Enc.arrayDimension foldl' (Enc.arrayValue encVal))
   decVal = Dec.array (Dec.arrayDimension replicateM (Dec.arrayValue decVal))
+
+instance (ValuePersistent a) => Persistent (Maybe a) where
+  enc = Enc.nullableValue encVal
+  dec = Dec.nullableValue decVal
 
 -- ** Users
 
@@ -179,3 +186,65 @@ instance Persistent CommitAction where
       from a = case A.fromJSON a of 
         A.Error e -> error $ "Persistent/CommitAction: " ++ e 
         A.Success s -> s
+
+-- * PSQL types
+
+data PSQLType 
+  = PChar { size :: Int }
+  | PVarChar { size :: Int }
+  | PText
+  | PBit { size :: Int }
+  | PVarBit { size :: Int }
+  | PSmallInt
+  | PInt 
+  | PInteger
+  | PBigInt
+  | PSmallSerial
+  | PSerial
+  | PBigSerial
+  | PNumeric { totalDigits :: Int, decimalDigits :: Int }
+  | PDouble
+  | PReal
+  | PMoney
+  | PBool
+  | PDate
+  | PTimeStamp
+  | PTimeStampTZ
+  | PTime
+  | PTimeTZ
+
+instance Persistent PSQLType where
+  enc = contramap to enc
+    where
+      to = \case
+        PChar s -> sized "char" s
+        PVarChar s -> sized "varchar" s
+        PText -> "text"
+        PBit s -> sized "bit" s
+        PVarBit s -> sized "varbit" s
+        PSmallInt -> "smallint"
+        PInt -> "int"
+        PInteger -> "integer"
+        PBigInt -> "bigint"
+        PSmallSerial -> "smallserial"
+        PSerial -> "serial"
+        PBigSerial -> "bigserial"
+        PNumeric m d -> "numeric(" <> tshow m <> "," <> tshow d <> ")" 
+        PDouble -> "double precision"
+        PReal -> "real"
+        PMoney -> "money"
+        PBool -> "bool"
+        PDate -> "date"
+        PTimeStamp -> "timestamp"
+        PTimeStampTZ -> "timestamptz"
+        PTime -> "time"
+        PTimeTZ -> "timetz"
+      tshow = T.pack . show
+      sized tag s = tag <> "(" <> tshow s <> ")" 
+  dec = undefined -- TODO
+
+data Field = Field { columnName :: Text, columnType :: PSQLType }
+
+-- * SQL API
+
+-- createTable :: Text -> [Field] -> 
