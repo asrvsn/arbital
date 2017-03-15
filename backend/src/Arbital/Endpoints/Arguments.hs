@@ -8,8 +8,11 @@ module Arbital.Endpoints.Arguments
 
 import Servant
 
+import Control.Monad ((>=>))
+
 import Arbital.Types
 import Arbital.State
+import Arbital.Database.Items
 
 type ArgumentsAPI = 
        "arguments" :> Capture "argumentid" ArgumentID :> "items" :> Get '[JSON] [ClaimItem]
@@ -17,11 +20,9 @@ type ArgumentsAPI =
   :<|> "arguments" :> Capture "argumentid" ArgumentID :> Get '[JSON] Argument
 
 argumentsServer :: ServerT ArgumentsAPI App
-argumentsServer = 
-  getArgumentClaims :<|> getArgument
+argumentsServer = claimItems :<|> arg
+  where
+    claimItems i = 
+      withDb $ getArgument i >>= (mapM (getClaim >=> getClaimItem) . argumentClaims)
+    arg i = withDb $ getArgument i
 
-getArgumentClaims :: ArgumentID -> App [ClaimItem]
-getArgumentClaims = undefined
-
-getArgument :: ArgumentID -> App Argument
-getArgument = undefined

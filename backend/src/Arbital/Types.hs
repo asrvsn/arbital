@@ -16,10 +16,12 @@ module Arbital.Types
   , ClaimID(..)
   , Claim(..)
   , ClaimItem(..)
+  , toClaimItem
   -- * Arguments
   , ArgumentID(..)
   , Argument(..)
   , ArgumentItem(..)
+  , toArgumentItem
   -- * Commits
   , CommitID(..)
   , Commit(..)
@@ -137,6 +139,14 @@ instance ToJSON ClaimItem where
                     , "authorName" .= iClaimAuthorName c
                     ]
 
+toClaimItem :: Text -> Claim -> ClaimItem
+toClaimItem name c = ClaimItem
+  { iClaimId = claimId c
+  , iClaimText = claimText c
+  , iClaimAuthorId = claimAuthorId c
+  , iClaimAuthorName = name
+  }
+
 -- * Arguments
 
 newtype ArgumentID = ArgumentID Text deriving (Generic)
@@ -183,6 +193,14 @@ instance ToJSON ArgumentItem where
                     , "authorId" .= iArgumentAuthorId a
                     , "authorName" .= iArgumentAuthorName a
                     ]
+
+toArgumentItem :: Text -> Argument -> ArgumentItem
+toArgumentItem name a = ArgumentItem 
+  { iArgumentId = argumentId a
+  , iArgumentSummary = argumentSummary a
+  , iArgumentAuthorId = argumentAuthorId a
+  , iArgumentAuthorName = name
+  }
 
 -- * Commits
 

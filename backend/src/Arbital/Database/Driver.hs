@@ -12,8 +12,7 @@ module Arbital.Database.Driver
   , openConnection
   , closeConnection
   , runDb
-  , Error(..)
-  , ResultError(..)
+  , dbResultErr 
   -- * SQL API
   , createTable
   , select
@@ -55,8 +54,11 @@ closeConnection = release
 dbSettings :: Settings
 dbSettings = settings "localhost" 5432 "anand" "" "arbital"
 
-runDb :: Session a -> Connection -> IO (Either Error a)
-runDb = run
+runDb :: Connection -> Session a -> IO (Either Error a)
+runDb c s = run s c
+
+dbResultErr :: Text -> Session a
+dbResultErr = throwError . ResultError . UnexpectedResult 
 
 -- * Persistent typeclass
 
@@ -317,7 +319,7 @@ update :: (HasTable a, Persistent (Id a), Persistent a) => Proxy a -> Id a -> (a
 update p i f = do
   ma_ <- select p i
   case ma_ of 
-    Nothing -> throwError $ ResultError $ UnexpectedResult "update: value not found"
+    Nothing -> dbResultErr "update: value not found"
     Just a_ -> do
       delete p i
       insert p (f a_)

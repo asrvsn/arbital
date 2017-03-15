@@ -20,13 +20,12 @@ library
                        Arbital.Endpoints.Claims
                        Arbital.Endpoints.Arguments
                        Arbital.Endpoints.Authenticated
-                       Arbital.Database.User
-                       Arbital.Database.Claim
-                       Arbital.Database.Argument
                        Arbital.Database.Driver
+                       Arbital.Database.Items
                        Arbital.Types
                        Arbital.State
                        Arbital.Constants
+                       Arbital.Missing
   build-depends:       base >= 4.7 && < 5
                      , time
                      , text

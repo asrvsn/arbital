@@ -1,5 +1,6 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Arbital.State 
   ( 
@@ -15,21 +16,21 @@ module Arbital.State
   , useSession
   , startSession
   , removeStaleSessions
-  , withConnection
+  , withDb
   ) where
 
 import           Data.Map (Map)
-import qualified Data.Map as Map
-import           Servant 
-import           Data.UUID.V1 (nextUUID)
-import           Data.UUID (toText)
+import           Data.Monoid
 import           Data.Time.Clock 
+import qualified Data.Map as Map
+import qualified Data.ByteString.Lazy.Char8 as BLC
+import           Servant 
 import           Control.Concurrent.STM
-import           Control.Concurrent (threadDelay)
 import           Control.Monad.Reader
 
 import Arbital.Database.Driver 
 import Arbital.Types
+import Arbital.Missing
 
   -- * Types
 
@@ -68,7 +69,7 @@ useSession s = do
 
 startSession :: User -> App Session
 startSession u = do
-  s <- liftIO freshSessionId
+  s <- liftIO $ SessionID <$> freshUid
   t <- liftIO getCurrentTime
   ms <- asks sessions
   let se = Session s u t t 
@@ -85,12 +86,12 @@ removeStaleSessions dt = do
   where
     isStale t se = (dt `addUTCTime` sessionLastUsed se) < t
 
-freshSessionId :: IO SessionID
-freshSessionId = do 
-  mu <- nextUUID
-  case mu of 
-    Nothing -> threadDelay 20 >> freshSessionId
-    Just u -> return $ SessionID (toText u)
-
 withConnection :: (Connection -> IO a) -> App a
 withConnection m = asks dbConnection >>= liftIO . m
+
+withDb :: DbSession a -> App a
+withDb m = do
+  res <- withConnection $ \c -> runDb c m
+  case res of 
+    Left e -> throwError $ err500 { errBody = "Database error: " <> BLC.pack (show e) }
+    Right r -> return r

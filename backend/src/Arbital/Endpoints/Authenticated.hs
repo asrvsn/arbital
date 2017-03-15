@@ -21,7 +21,7 @@ import qualified Data.Text as T
 import qualified Data.ByteString.Lazy.Char8 as BLC
 import           Control.Lens ((^?))
 import           Control.Monad.IO.Class (liftIO)
-import           Network.Wreq
+import           Network.Wreq hiding (Proxy)
 import           Network.Wai
 import           Servant
 import           Servant.Server.Experimental.Auth ( AuthHandler
@@ -37,7 +37,8 @@ import           Servant.Server ( Context ((:.)
 import           Arbital.Types
 import           Arbital.State
 import           Arbital.Constants 
-import qualified Arbital.Database.User as UserDB
+import           Arbital.Database.Driver
+import           Arbital.Database.Items
 
 -- | We need to specify the data returned after authentication
 type instance AuthServerData (AuthProtect "cookie-auth") = Session 
@@ -101,8 +102,7 @@ gapiError err =
 
 getGapiUser :: GoogleAuthResponse -> App User
 getGapiUser ar = do
-  mUser <- withConnection $ \c -> UserDB.get c (authEmail ar)
+  mUser <- withDb $ select Proxy (authEmail ar)
   case mUser of 
     Just user -> return user
-    Nothing -> withConnection $ \c ->
-      UserDB.create c (authEmail ar) (authName ar)
+    Nothing -> withDb $ createUser (authEmail ar) (authName ar)
