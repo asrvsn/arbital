@@ -15,6 +15,7 @@ module Arbital.Database.Driver
   , dbResultErr 
   -- * SQL API
   , createTable
+  , dropTable
   , selectAll
   , select
   , insert
@@ -53,7 +54,7 @@ closeConnection :: Connection -> IO ()
 closeConnection = release
 
 dbSettings :: Settings
-dbSettings = settings "localhost" 5432 "anand" "" "arbital"
+dbSettings = settings "localhost" 5432 "anand" "anand" "arbital"
 
 runDb :: Connection -> Session a -> IO (Either Error a)
 runDb c s = run s c
@@ -302,11 +303,14 @@ createTable p = case tableFields p of
     where
       fs' = B.intercalate "," (map fieldShow fs)
 
+dropTable :: (HasTable a) => Proxy a -> Session ()
+dropTable p = sql $ "DROP TABLE " <> tableName p
+
 selectAll :: (HasTable a, Persistent a) => Proxy a -> Session [a]
 selectAll p = query () q
   where 
     q = statement cmd encoder decoder True
-    cmd = "select * from " <> tableName p
+    cmd = "SELECt * FROM " <> tableName p
     encoder = Enc.unit
     decoder = Dec.rowsList dec 
 
@@ -315,7 +319,7 @@ select p i = query i q
   where
     q = statement cmd encoder decoder True
     cmd =
-      "select * from " <> tableName p <> " where " <> idField p <> " = $1"
+      "SELECT * FROM " <> tableName p <> " WHERE " <> idField p <> " = $1"
     encoder = enc
     decoder = Dec.maybeRow dec
 
@@ -324,7 +328,7 @@ insert p a = query a q
   where
     q = statement cmd encoder decoder True
     cmd = 
-      "insert into " <> tableName p <> " values $1"
+      "INSERT INTO " <> tableName p <> " VALUES $1"
     encoder = enc
     decoder = Dec.unit
 
@@ -342,7 +346,7 @@ delete p i = query i q
   where
     q = statement cmd encoder decoder True
     cmd = 
-      "delete from " <> tableName p <> " where " <> idField p <> " = $1"
+      "DELETE FROM " <> tableName p <> " WHERE " <> idField p <> " = $1"
     encoder = enc
     decoder = Dec.unit
 
@@ -355,6 +359,8 @@ instance HasTable User where
     [ Field "id" PText
     , Field "email" PText
     , Field "name" PText
+    , Field "claims" (PArray PText)
+    , Field "arguments" (PArray PText)
     , Field "registrationDate" PTimeStampTZ
     ]
 

@@ -32,6 +32,10 @@ main = do
 initApp :: Connection -> IO ()
 initApp c = do
   void $ runDb c $ do
+    dropTable (Proxy :: Proxy User) 
+    dropTable (Proxy :: Proxy Claim)
+    dropTable (Proxy :: Proxy Argument)
+    dropTable (Proxy :: Proxy Commit)
     createTable (Proxy :: Proxy User) 
     createTable (Proxy :: Proxy Claim)
     createTable (Proxy :: Proxy Argument)
