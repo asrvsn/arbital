@@ -10,13 +10,13 @@ import Servant
 
 import Arbital.Types
 import Arbital.State
+import Arbital.Database.Driver
+import Arbital.Database.Items
 
 type UsersAPI = 
-  -- POST to /users to create a new user
-       "users" :> "create" :> ReqBody '[JSON] User :> Post '[JSON] User
-
+  
   -- GET to /users/:userid to get a user
-  :<|> "users" :> Capture "userid" UserID :> "items" :> "arguments" :> Get '[JSON] [ArgumentItem]
+       "users" :> Capture "userid" UserID :> "items" :> "arguments" :> Get '[JSON] [ArgumentItem]
 
   :<|> "users" :> Capture "userid" UserID :> "items" :> "claims" :> Get '[JSON] [ClaimItem]
 
@@ -25,25 +25,27 @@ type UsersAPI =
   -- GET to /users to get a page of all users
   :<|> "users" :> Get '[JSON] [User]
 
-usersServer :: ServerT UsersAPI App
-usersServer = 
-        createUser
-  :<|>  getUserArgumentItems
-  :<|>  getUserClaimItems
-  :<|>  getUser
-  :<|>  getAllUsers
+usersServer :: Session -> ServerT UsersAPI App
+usersServer _ = 
+        retrieveUserArgItems 
+  :<|>  retrieveUserClaimItems 
+  :<|>  retrieveUser
+  :<|>  retrieveAllUsers
 
-createUser :: User -> App User 
-createUser = undefined
+retrieveUserArgItems :: UserID -> App [ArgumentItem]
+retrieveUserArgItems i = withDb $ do
+  u <- getUser i
+  as <- mapM getArgument (userArguments u)
+  mapM getArgumentItem as
 
-getUserArgumentItems :: UserID -> App [ArgumentItem]
-getUserArgumentItems = undefined
+retrieveUserClaimItems :: UserID -> App [ClaimItem]
+retrieveUserClaimItems i = withDb $ do 
+  u <- getUser i 
+  cs <- mapM getClaim (userClaims u)
+  mapM getClaimItem cs
 
-getUserClaimItems :: UserID -> App [ClaimItem]
-getUserClaimItems = undefined 
+retrieveUser :: UserID -> App User
+retrieveUser = withDb . getUser 
 
-getUser :: UserID -> App User
-getUser = undefined
-
-getAllUsers :: App [User]
-getAllUsers = undefined
+retrieveAllUsers :: App [User]
+retrieveAllUsers = withDb $ selectAll Proxy

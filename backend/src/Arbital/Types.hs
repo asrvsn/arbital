@@ -51,6 +51,8 @@ data User = User
   { userId :: UserID
   , userEmail :: Email
   , userName :: Text
+  , userClaims :: [ClaimID]
+  , userArguments :: [ArgumentID]
   , registrationDate :: UTCTime
   } 
 
@@ -58,6 +60,8 @@ instance ToJSON User where
   toJSON u = object [ "id" .= userId u
                     , "email" .= userEmail u
                     , "name" .= userName u
+                    , "claims" .= userClaims u
+                    , "arguments" .= userArguments u
                     , "registrationDate" .= registrationDate u
                     ]
 instance FromJSON User where
@@ -65,6 +69,8 @@ instance FromJSON User where
     User <$> v .: "id"
          <*> v .: "email"
          <*> v .: "name"
+         <*> v .: "claims"
+         <*> v .: "arguments"
          <*> v .: "registrationDate"
 
 -- * Sessions
@@ -147,6 +153,7 @@ toClaimItem name c = ClaimItem
   , iClaimAuthorName = name
   }
 
+
 -- * Arguments
 
 newtype ArgumentID = ArgumentID Text deriving (Generic)
@@ -217,8 +224,8 @@ data Commit = Commit
 data CommitAction = 
     CreateClaim Claim
   | UpdateClaim 
-      { oldClaim :: Claim
-      , newClaim :: Claim
+      { beforeClaim :: Claim
+      , afterClaim :: Claim
       }
   | CreateArgumentFor ClaimID Argument
   | CreateArgumentAgainst ClaimID Argument

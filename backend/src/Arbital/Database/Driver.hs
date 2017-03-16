@@ -15,6 +15,7 @@ module Arbital.Database.Driver
   , dbResultErr 
   -- * SQL API
   , createTable
+  , selectAll
   , select
   , insert
   , update
@@ -107,11 +108,15 @@ instance Persistent User where
         contramap userId enc
     <>  contramap userEmail enc
     <>  contramap userName enc
+    <>  contramap userClaims (Enc.value encVal)
+    <>  contramap userArguments (Enc.value encVal)
     <>  contramap registrationDate enc
   dec = User 
     <$> dec 
     <*> dec 
     <*> dec
+    <*> Dec.value decVal
+    <*> Dec.value decVal
     <*> dec
 
 -- ** Sessions
@@ -296,6 +301,14 @@ createTable p = case tableFields p of
   fs -> sql $ "CREATE TABLE " <> tableName p <> " (" <> fs' <> ")"
     where
       fs' = B.intercalate "," (map fieldShow fs)
+
+selectAll :: (HasTable a, Persistent a) => Proxy a -> Session [a]
+selectAll p = query () q
+  where 
+    q = statement cmd encoder decoder True
+    cmd = "select * from " <> tableName p
+    encoder = Enc.unit
+    decoder = Dec.rowsList dec 
 
 select :: (HasTable a, Persistent (Id a), Persistent a) => Proxy a -> Id a -> Session (Maybe a)
 select p i = query i q

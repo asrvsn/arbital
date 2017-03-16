@@ -40,6 +40,8 @@ createUser email name = do
   let u = User { userId = i
                , userEmail = email
                , userName = name
+               , userClaims = []
+               , userArguments = []
                , registrationDate = t 
                }
   insert Proxy u

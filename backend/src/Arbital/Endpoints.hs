@@ -19,7 +19,7 @@ import Arbital.Endpoints.Authenticated
 type RootAPI = Get '[JSON] [ClaimItem]
 
 rootServer :: ServerT RootAPI App
-rootServer = getAllClaimItems
+rootServer = retrieveAllClaimItems
 
 type PrivateAPI = RootAPI 
              :<|> ArgumentsAPI
@@ -44,11 +44,11 @@ server r = enter (appToUnderlying r) appServer
     appServer = privateServer :<|> publicServer
 
 privateServer :: Session -> ServerT PrivateAPI App
-privateServer _ = -- TODO 
+privateServer s = 
         rootServer
   :<|>  argumentsServer
-  :<|>  claimsServer
-  :<|>  usersServer
+  :<|>  claimsServer s
+  :<|>  usersServer s
 
 publicServer :: ServerT PublicAPI App
 publicServer = login
