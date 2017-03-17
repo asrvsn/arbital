@@ -26,18 +26,18 @@ class AppContainer extends Component {
   render () {
     const { store } = this.props
 
-    const requireAuth = (nextState, replaceState) => {
-      replaceState({ nextPathname: nextState.location.pathname }, '/login')
+    const requireAuth = (nextState, replace) => {
+      replace('/login')
     }
-
-          // <Route path='logout' component={Logout} onEnter={requireAuth} />
 
     const children = (
       <div>
         <Header />
-        <Route path='/' component={Feed} onEnter={requireAuth}>
+        <Route path='/'>
+          <IndexRoute component={Feed} onEnter={requireAuth} />
 
           <Route path='login' component={Login} />
+          <Route path='logout' component={Logout} onEnter={requireAuth} />
 
           <Route path='arguments'>
             <Route path=':argumentid' component={Argument} onEnter={requireAuth} />
