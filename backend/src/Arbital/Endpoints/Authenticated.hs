@@ -47,7 +47,12 @@ data AuthStrategy
   = GoogleTokenAuth { idToken :: Text }
   deriving (Generic)
 
-instance FromJSON AuthStrategy 
+instance FromJSON AuthStrategy where
+  parseJSON = withObject "AuthStrategy" $ \v -> do
+    tag <- v .: "tag"
+    case (tag :: Text) of 
+      "GoogleTokenAuth" -> GoogleTokenAuth <$> v .: "idToken"
+      _ -> fail "AuthStrategy tag not found"
 
 data GoogleAuthResponse = GoogleAuthResponse 
   { authClientId :: Text

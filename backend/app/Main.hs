@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Main where
 
 import System.Exit
@@ -5,7 +7,10 @@ import System.Posix.Signals
 import Control.Concurrent (myThreadId)
 import Control.Exception (throwTo)
 import Control.Monad (void)
+import Network.Wai (Middleware)
 import Network.Wai.Handler.Warp
+import Network.Wai.Middleware.Cors 
+import Network.Wai.Middleware.RequestLogger (logStdoutDev)
 import Data.Proxy
 
 import Arbital.Types
@@ -27,7 +32,12 @@ main = do
       initApp c
       r <- newAppState c
       putStrLn $ "[Info] starting app"
-      run 5000 (app r)
+      run 5000 (myCors . logStdoutDev $ app r)
+
+myCors :: Middleware
+myCors = cors (const $ Just policy)
+  where
+    policy = simpleCorsResourcePolicy { corsRequestHeaders = ["Content-Type"] }
 
 initApp :: Connection -> IO ()
 initApp c = do
