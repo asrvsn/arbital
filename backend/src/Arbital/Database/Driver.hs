@@ -14,10 +14,12 @@ module Arbital.Database.Driver
   , runDb
   , dbResultErr 
   -- * SQL API
+  , Field(..)
   , createTable
   , dropTable
-  , selectAll
   , select
+  , selectAll
+  , selectWhere1
   , insert
   , update
   , delete
@@ -100,9 +102,17 @@ instance (ValuePersistent a) => Persistent (Maybe a) where
 
 -- ** Users
 
+instance Persistent UserID where
+  enc = contramap (\(UserID e) -> e) enc
+  dec = UserID <$> dec
+
 instance Persistent Email where
   enc = contramap (\(Email e) -> e) enc
   dec = Email <$> dec
+
+instance Persistent Name where
+  enc = contramap (\(Name e) -> e) enc
+  dec = Name <$> dec
 
 instance Persistent User where
   enc = 
@@ -275,10 +285,20 @@ psTypeShow = \case
     -- tshow = BC.pack . show
     -- sized tag s = tag <> "(" <> tshow s <> ")" 
 
-data Field = Field { columnName :: ByteString, columnType :: PSQLType }
+data Column = Column { columnName :: ByteString, columnType :: PSQLType }
 
-fieldShow :: Field -> ByteString
-fieldShow f = columnName f <> " " <> psTypeShow (columnType f)
+data Schema = Schema 
+  { idColumn :: Column
+  , restColumns :: [Column]
+  }
+
+data Field a = Field { fieldName :: ByteString, fieldValue :: a }
+
+showSchema :: Schema -> ByteString
+showSchema s = B.intercalate "," (map showColumn $ idColumn s : restColumns s)
+
+showColumn :: Column -> ByteString
+showColumn f = columnName f <> " " <> psTypeShow (columnType f)
 
 -- param :: Int -> ByteString
 -- param n = "$" <> BC.pack (show n)
@@ -288,31 +308,23 @@ fieldShow f = columnName f <> " " <> psTypeShow (columnType f)
 class HasTable a where 
   type Id a 
   tableName :: Proxy a -> ByteString
-  tableFields :: Proxy a -> [Field] -- ^ The first field is assumed to be the ID field.
+  tableSchema :: Proxy a -> Schema 
 
--- | The first field is assumed to be the ID field.
+-- | The first Column is assumed to be the ID Column.
 idField :: (HasTable a) => Proxy a -> ByteString
-idField p = case tableFields p of 
-  [] -> error "HasTable got no fields"
-  (f:_) -> columnName f
+idField = columnName . idColumn . tableSchema
 
 createTable :: (HasTable a) => Proxy a -> Session ()
-createTable p = case tableFields p of 
-  [] -> pure ()
-  fs -> sql $ "CREATE TABLE " <> tableName p <> " (" <> fs' <> ")"
-    where
-      fs' = B.intercalate "," (map fieldShow fs)
+createTable p = 
+  sql $ 
+       "CREATE TABLE " 
+    <> tableName p 
+    <> " (" 
+    <> showSchema (tableSchema p) 
+    <> ")"
 
 dropTable :: (HasTable a) => Proxy a -> Session ()
 dropTable p = sql $ "DROP TABLE " <> tableName p
-
-selectAll :: (HasTable a, Persistent a) => Proxy a -> Session [a]
-selectAll p = query () q
-  where 
-    q = statement cmd encoder decoder True
-    cmd = "SELECt * FROM " <> tableName p
-    encoder = Enc.unit
-    decoder = Dec.rowsList dec 
 
 select :: (HasTable a, Persistent (Id a), Persistent a) => Proxy a -> Id a -> Session (Maybe a)
 select p i = query i q
@@ -323,12 +335,29 @@ select p i = query i q
     encoder = enc
     decoder = Dec.maybeRow dec
 
+selectAll :: (HasTable a, Persistent a) => Proxy a -> Session [a]
+selectAll p = query () q
+  where 
+    q = statement cmd encoder decoder True
+    cmd = "SELECT * FROM " <> tableName p
+    encoder = Enc.unit
+    decoder = Dec.rowsList dec 
+
+selectWhere1 :: (HasTable a, Persistent a, Persistent b) => Proxy a -> Field b -> Session (Maybe a)
+selectWhere1 p f = query (fieldValue f) q
+  where
+    q = statement cmd encoder decoder True
+    cmd =
+      "SELECT * FROM " <> tableName p <> " WHERE " <> fieldName f <> " = $1"
+    encoder = enc
+    decoder = Dec.maybeRow dec
+
 insert :: (HasTable a, Persistent a) => Proxy a -> a -> Session ()
 insert p a = query a q
   where
     q = statement cmd encoder decoder True
     cmd = 
-      "INSERT INTO " <> tableName p <> " VALUES $1"
+      "INSERT INTO " <> tableName p <> " VALUES ($1)"
     encoder = enc
     decoder = Dec.unit
 
@@ -355,45 +384,53 @@ delete p i = query i q
 instance HasTable User where
   type Id User = UserID
   tableName _ = "users"
-  tableFields _ = 
-    [ Field "id" PText
-    , Field "email" PText
-    , Field "name" PText
-    , Field "claims" (PArray PText)
-    , Field "arguments" (PArray PText)
-    , Field "registrationDate" PTimeStampTZ
-    ]
+  tableSchema _ = Schema
+    { idColumn = Column "id" PText
+    , restColumns = 
+      [ Column "email" PText
+      , Column "name" PText
+      , Column "claims" (PArray PText)
+      , Column "arguments" (PArray PText)
+      , Column "registrationDate" PTimeStampTZ
+      ]
+    }
 
 instance HasTable Claim where
   type Id Claim = ClaimID
   tableName _ = "claims"
-  tableFields _ = 
-      [ Field "id" PText
-      , Field "text" PText
-      , Field "argsFor" (PArray PText)
-      , Field "argsAgainst" (PArray PText)
-      , Field "authorId" PText
-      , Field "creationDate" PTimeStampTZ
+  tableSchema _ = Schema
+    { idColumn = Column "id" PText
+    , restColumns = 
+      [ Column "text" PText
+      , Column "argsFor" (PArray PText)
+      , Column "argsAgainst" (PArray PText)
+      , Column "authorId" PText
+      , Column "creationDate" PTimeStampTZ
       ]
+    }
 
 instance HasTable Argument where
   type Id Argument = ArgumentID
   tableName _ = "arguments"
-  tableFields _ = 
-    [ Field "id" PText
-    , Field "text" PText
-    , Field "claims" (PArray PText)
-    , Field "authorId" PText
-    , Field "creationDate" PTimeStampTZ
-    ]
+  tableSchema _ = Schema
+    { idColumn = Column "id" PText
+    , restColumns = 
+      [ Column "text" PText
+      , Column "claims" (PArray PText)
+      , Column "authorId" PText
+      , Column "creationDate" PTimeStampTZ
+      ]
+    }
 
 instance HasTable Commit where
   type Id Commit = CommitID
   tableName _ = "commits"
-  tableFields _ = 
-    [ Field "id" PText
-    , Field "authorId" PText
-    , Field "action" PJSON
-    , Field "creationDate" PTimeStampTZ
-    , Field "message" PText
-    ]
+  tableSchema _ = Schema
+    { idColumn = Column "id" PText
+    , restColumns = 
+      [ Column "authorId" PText
+      , Column "action" PJSON
+      , Column "creationDate" PTimeStampTZ
+      , Column "message" PText
+      ]
+    }

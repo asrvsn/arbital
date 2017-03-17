@@ -40,13 +40,12 @@ myCors = cors (const $ Just policy)
     policy = simpleCorsResourcePolicy { corsRequestHeaders = ["Content-Type"] }
 
 initApp :: Connection -> IO ()
-initApp c = do
-  void $ runDb c $ do
-    dropTable (Proxy :: Proxy User) 
-    dropTable (Proxy :: Proxy Claim)
-    dropTable (Proxy :: Proxy Argument)
-    dropTable (Proxy :: Proxy Commit)
-    createTable (Proxy :: Proxy User) 
-    createTable (Proxy :: Proxy Claim)
-    createTable (Proxy :: Proxy Argument)
-    createTable (Proxy :: Proxy Commit)
+initApp c = void $ do
+  runDb c $ dropTable (Proxy :: Proxy User) 
+  runDb c $ dropTable (Proxy :: Proxy Claim)
+  runDb c $ dropTable (Proxy :: Proxy Argument)
+  runDb c $ dropTable (Proxy :: Proxy Commit)
+  runDb c $ createTable (Proxy :: Proxy User) 
+  runDb c $ createTable (Proxy :: Proxy Claim)
+  runDb c $ createTable (Proxy :: Proxy Argument)
+  runDb c $ createTable (Proxy :: Proxy Commit)

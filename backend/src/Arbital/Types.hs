@@ -6,7 +6,8 @@ module Arbital.Types
   (
   -- * Users
     Email(..)
-  , UserID
+  , UserID(..)
+  , Name(..)
   , User(..)
   -- * Sessions
   , SessionID(..)
@@ -37,24 +38,32 @@ import Web.HttpApiData
 
 -- * Users
 
-newtype Email = Email Text deriving (Generic)
+newtype Email = Email Text deriving (Show, Generic)
 
 instance ToJSON Email
 instance FromJSON Email
 
-instance FromHttpApiData Email where
-  parseUrlPiece = Right . Email
+newtype Name = Name Text deriving (Show, Generic)
 
-type UserID = Email
+instance ToJSON Name
+instance FromJSON Name
+
+newtype UserID = UserID Text deriving (Show, Generic)
+
+instance FromHttpApiData UserID where
+  parseUrlPiece = Right . UserID
+
+instance ToJSON UserID
+instance FromJSON UserID
 
 data User = User 
   { userId :: UserID
   , userEmail :: Email
-  , userName :: Text
+  , userName :: Name
   , userClaims :: [ClaimID]
   , userArguments :: [ArgumentID]
   , registrationDate :: UTCTime
-  } 
+  } deriving (Show)
 
 instance ToJSON User where
   toJSON u = object [ "id" .= userId u
@@ -75,7 +84,7 @@ instance FromJSON User where
 
 -- * Sessions
 
-newtype SessionID = SessionID Text deriving (Generic, Ord, Eq)
+newtype SessionID = SessionID Text deriving (Show, Generic, Ord, Eq)
 
 instance ToJSON SessionID
 
@@ -84,7 +93,7 @@ data Session = Session
   , sessionUser :: User
   , sessionCreated :: UTCTime
   , sessionLastUsed :: UTCTime
-  }
+  } deriving (Show)
 
 instance ToJSON Session where
   toJSON s = object [ "id" .= sessionId s
@@ -97,7 +106,7 @@ setLastUsed t s = s { sessionLastUsed = t }
 
 -- * Claims
 
-newtype ClaimID = ClaimID Text deriving (Generic)
+newtype ClaimID = ClaimID Text deriving (Show, Generic)
 
 instance ToJSON ClaimID
 instance FromJSON ClaimID
@@ -112,7 +121,7 @@ data Claim = Claim
   , argsAgainst :: [ArgumentID]
   , claimAuthorId :: UserID
   , claimCreationDate :: UTCTime
-  } 
+  } deriving (Show)
 
 instance ToJSON Claim where
   toJSON c = object [ "id" .= claimId c
@@ -135,8 +144,8 @@ data ClaimItem = ClaimItem
   { iClaimId :: ClaimID
   , iClaimText :: Text
   , iClaimAuthorId :: UserID
-  , iClaimAuthorName :: Text
-  }
+  , iClaimAuthorName :: Name
+  } deriving (Show)
 
 instance ToJSON ClaimItem where
   toJSON c = object [ "id" .= iClaimId c
@@ -145,7 +154,7 @@ instance ToJSON ClaimItem where
                     , "authorName" .= iClaimAuthorName c
                     ]
 
-toClaimItem :: Text -> Claim -> ClaimItem
+toClaimItem :: Name -> Claim -> ClaimItem
 toClaimItem name c = ClaimItem
   { iClaimId = claimId c
   , iClaimText = claimText c
@@ -156,7 +165,7 @@ toClaimItem name c = ClaimItem
 
 -- * Arguments
 
-newtype ArgumentID = ArgumentID Text deriving (Generic)
+newtype ArgumentID = ArgumentID Text deriving (Show, Generic)
 
 instance ToJSON ArgumentID
 instance FromJSON ArgumentID
@@ -170,7 +179,7 @@ data Argument = Argument
   , argumentClaims :: [ClaimID]
   , argumentAuthorId :: UserID
   , argumentCreationDate :: UTCTime
-  } 
+  } deriving (Show)
 
 instance ToJSON Argument where
   toJSON a = object [ "id" .= argumentId a
@@ -191,8 +200,8 @@ data ArgumentItem = ArgumentItem
   { iArgumentId :: ArgumentID
   , iArgumentSummary :: Text
   , iArgumentAuthorId :: UserID
-  , iArgumentAuthorName :: Text
-  } 
+  , iArgumentAuthorName :: Name
+  } deriving (Show)
 
 instance ToJSON ArgumentItem where
   toJSON a = object [ "id" .= iArgumentId a
@@ -201,7 +210,7 @@ instance ToJSON ArgumentItem where
                     , "authorName" .= iArgumentAuthorName a
                     ]
 
-toArgumentItem :: Text -> Argument -> ArgumentItem
+toArgumentItem :: Name -> Argument -> ArgumentItem
 toArgumentItem name a = ArgumentItem 
   { iArgumentId = argumentId a
   , iArgumentSummary = argumentSummary a
@@ -211,7 +220,7 @@ toArgumentItem name a = ArgumentItem
 
 -- * Commits
 
-newtype CommitID = CommitID Text
+newtype CommitID = CommitID Text deriving (Show)
 
 data Commit = Commit 
   { commitId :: CommitID
@@ -219,7 +228,7 @@ data Commit = Commit
   , commitAction :: CommitAction
   , commitCreationDate :: UTCTime
   , commitMessage :: Text
-  }
+  } deriving (Show)
 
 data CommitAction = 
     CreateClaim Claim
@@ -235,7 +244,7 @@ data CommitAction =
       { oldUser :: User
       , newUser :: User
       }
-  deriving ( Generic )
+  deriving (Show, Generic )
 
 instance ToJSON CommitAction
 instance FromJSON CommitAction

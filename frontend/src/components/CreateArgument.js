@@ -6,6 +6,8 @@ import AutoComplete from 'material-ui/AutoComplete';
 import GetterHOC from '../hoc/GetterHOC'
 import AuthoredListItem from './AuthoredListItem';
 
+import backend from '../util/backend'
+
 class CreateArgument extends Component {
 
   constructor(props) {
@@ -43,7 +45,15 @@ class CreateArgument extends Component {
   }
 
   submit() {
-    // TODO submit argumennt to backend
+    const { sessionId, claimItem } = this.props
+    const path = `/claims/${claimItem.claimId}/for` // TODO
+    const argument = undefined // TODO
+    backend
+      .authenticate(sessionId)
+      .post(path, argument)
+      .on('response', resp => {
+        // TODO
+      })
   }
 }
 

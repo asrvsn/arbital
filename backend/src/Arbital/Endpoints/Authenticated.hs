@@ -18,7 +18,6 @@ import           Data.Aeson
 import           Data.Text (Text)
 import           Data.Text.Encoding (decodeUtf8)
 import qualified Data.Text as T
-import qualified Data.ByteString.Lazy.Char8 as BLC
 import           Control.Lens ((^?))
 import           Control.Monad.IO.Class (liftIO)
 import           Network.Wreq hiding (Proxy)
@@ -45,7 +44,7 @@ type instance AuthServerData (AuthProtect "cookie-auth") = Session
 
 data AuthStrategy 
   = GoogleTokenAuth { idToken :: Text }
-  deriving (Generic)
+  deriving (Show, Generic)
 
 instance FromJSON AuthStrategy where
   parseJSON = withObject "AuthStrategy" $ \v -> do
@@ -57,8 +56,8 @@ instance FromJSON AuthStrategy where
 data GoogleAuthResponse = GoogleAuthResponse 
   { authClientId :: Text
   , authEmail :: Email
-  , authName :: Text
-  }
+  , authName :: Name
+  } deriving (Show)
 
 instance FromJSON GoogleAuthResponse where
   parseJSON = withObject "google auth response" $ \v -> 
@@ -103,11 +102,12 @@ authContext r = authHandler r :. EmptyContext
 
 gapiError :: String -> App a
 gapiError err = 
-  throwError $ err401 { errBody = BLC.pack $ "gapi-signin: " ++ err}
+  throwError $ err500 { errReasonPhrase = "gapi-signin: " ++ err}
 
 getGapiUser :: GoogleAuthResponse -> App User
 getGapiUser ar = do
-  mUser <- withDb $ select Proxy (authEmail ar)
+  liftIO $ putStrLn $ "got here: " ++ show ar
+  mUser <- withDb $ selectWhere1 Proxy (Field "email" (authEmail ar))
   case mUser of 
     Just user -> return user
     Nothing -> withDb $ createUser (authEmail ar) (authName ar)

@@ -23,7 +23,6 @@ import           Data.Map (Map)
 import           Data.Monoid
 import           Data.Time.Clock 
 import qualified Data.Map as Map
-import qualified Data.ByteString.Lazy.Char8 as BLC
 import           Servant 
 import           Control.Concurrent.STM
 import           Control.Monad.Reader
@@ -93,5 +92,5 @@ withDb :: DbSession a -> App a
 withDb m = do
   res <- withConnection $ \c -> runDb c m
   case res of 
-    Left e -> throwError $ err500 { errBody = "Database error: " <> BLC.pack (show e) }
+    Left e -> throwError $ err500 { errReasonPhrase = "Database error: " <> show e }
     Right r -> return r

@@ -1,9 +1,15 @@
 import React, { Component } from 'react'
-import request from 'request'
 import Redbox from 'redbox-react'
 import { connect } from 'react-redux'
 
 import LinearProgress from 'material-ui/LinearProgress';
+
+import backend from '../util/backend'
+import AuthenticatedHOC from './AuthenticatedHOC'
+
+/**
+  NOTE: if using this HOC, do not use AuthenticatedHOC!
+  **/
 
 export default (ChildComponent, getter) => {
   class GetterComponent extends Component {
@@ -21,11 +27,9 @@ export default (ChildComponent, getter) => {
 
       getter(this.props).forEach(item => {
         const {path, mapResponseToProps} = item
-        request
-          .get({
-            url: this.backendUrl + path,
-            'servant-session-id': sessionId
-          })
+        backend
+          .authenticate(sessionId)
+          .get(path)
           .on('response', response => {
 
             if (response.statusCode == 200) {
@@ -66,11 +70,5 @@ export default (ChildComponent, getter) => {
     }
   }
 
-  const mapStateToProps = ({session: {sessionId}}) => ({ sessionId })
-  const mapDispatchToProps = (dispatch) => ({})
-
-  return connect(
-      mapStateToProps,
-      mapDispatchToProps
-    )(GetterComponent)
+  return AuthenticatedHOC(GetterComponent)
 }

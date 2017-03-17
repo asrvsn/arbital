@@ -17,7 +17,6 @@ module Arbital.Database.Items
 
 import Data.Time.Clock (getCurrentTime)
 import Data.Proxy
-import Data.Text (Text)
 import Control.Monad.IO.Class (liftIO)
 
 import Arbital.Database.Driver
@@ -33,10 +32,10 @@ getUser i = do
     Nothing -> dbResultErr "user record not found"
     Just u -> return u
 
-createUser :: Email -> Text -> DbSession User
+createUser :: Email -> Name -> DbSession User
 createUser email name = do
   t <- liftIO getCurrentTime 
-  i <- liftIO $ Email <$> freshUid
+  i <- liftIO $ UserID <$> freshUid
   let u = User { userId = i
                , userEmail = email
                , userName = name
@@ -44,6 +43,7 @@ createUser email name = do
                , userArguments = []
                , registrationDate = t 
                }
+  liftIO . putStrLn . show $ u
   insert Proxy u
   return u
 

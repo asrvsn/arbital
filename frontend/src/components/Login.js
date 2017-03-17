@@ -1,8 +1,8 @@
 import React, { Component, PropTypes } from 'react'
 import { connect } from 'react-redux'
-import request from 'request'
 
 import authSuccess from '../actions'
+import backend from '../util/backend'
 
 import Dialog from 'material-ui/Dialog'
 
@@ -35,18 +35,20 @@ class Login extends Component {
       onsuccess: (user) => {
         const { id_token } = user.getAuthResponse()
         const url = 'http://' + window.location.hostname + ':5000/login'
-        request
-          .post(url)
-          .json({tag: 'GoogleTokenAuth', idToken: id_token})
-          .on('response', response => {
-            debugger
-            if (response.statusCode == 200) {
-              onAuthSuccess(JSON.parse(response.body))
-              history.push('/')
-            } else {
-              this.setState({title: 'Login failed: ' + response.body})
-            }
-          })
+        try {
+          backend
+            .post('/login', {tag: 'GoogleTokenAuth', idToken: id_token})
+            .on('response', response => {
+              if (response.statusCode == 200) {
+                onAuthSuccess(JSON.parse(response.body))
+                history.push('/')
+              } else {
+                this._loginErr(response.statusMessage)
+              }
+            })
+        } catch (e) {
+          this._loginErr(e)
+        }
       },
       ...properties.googleSignin
     })
@@ -65,6 +67,10 @@ class Login extends Component {
         <div id='google-signin-button' style={styles.googleSignin} />
       </Dialog>
     )
+  }
+
+  _loginErr(err) {
+    this.setState({title: 'Login failed: ' + err})
   }
 }
 
