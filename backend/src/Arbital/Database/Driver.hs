@@ -32,6 +32,7 @@ import           Data.Proxy
 import           Data.Text (Text)
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
+import qualified Data.ByteString.Char8 as BC
 import           Data.Foldable (foldl')
 import qualified Data.Aeson as A
 import           Control.Monad (replicateM)
@@ -314,6 +315,12 @@ class HasTable a where
 idField :: (HasTable a) => Proxy a -> ByteString
 idField = columnName . idColumn . tableSchema
 
+numFields :: (HasTable a) => Proxy a -> Int
+numFields p = length (restColumns $ tableSchema p) + 1
+
+mkSplice :: Int -> ByteString
+mkSplice n = "$" <> BC.pack (show n)
+
 createTable :: (HasTable a) => Proxy a -> Session ()
 createTable p = 
   sql $ 
@@ -357,9 +364,10 @@ insert p a = query a q
   where
     q = statement cmd encoder decoder True
     cmd = 
-      "INSERT INTO " <> tableName p <> " VALUES ($1)"
+      "INSERT INTO " <> tableName p <> " VALUES (" <> splices <> ")"
     encoder = enc
     decoder = Dec.unit
+    splices = B.intercalate "," (map mkSplice [1..numFields p])
 
 update :: (HasTable a, Persistent (Id a), Persistent a) => Proxy a -> Id a -> (a -> a) -> Session ()
 update p i f = do
