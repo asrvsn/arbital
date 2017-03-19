@@ -81,14 +81,14 @@ login = \case
       Nothing -> gapiError "received no response body"
         
 authHandler :: AppState -> AuthHandler Request Session
-authHandler r = mkAuthHandler $ \req -> 
+authHandler r = mkAuthHandler $ \req -> do
   case lookup "servant-session-id" (requestHeaders req) of
-    Nothing -> throwError (err401 { errReasonPhrase = "Missing auth header" })
+    Nothing -> throwError (err401 { errReasonPhrase = "missing auth header" })
     Just s -> do
       mse <- runAppT r $ 
         useSession $ SessionID (decodeUtf8 s)
       case mse of
-        Nothing -> throwError (err401 { errReasonPhrase = "Session not found" })
+        Nothing -> throwError (err401 { errReasonPhrase = "session not found" })
         Just se -> return se
 
 -- | The context that will be made available to request handlers. We supply the

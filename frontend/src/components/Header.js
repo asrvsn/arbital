@@ -4,30 +4,39 @@ import {Toolbar, ToolbarGroup, ToolbarSeparator, ToolbarTitle} from 'material-ui
 import FontIcon from 'material-ui/FontIcon';
 import RaisedButton from 'material-ui/RaisedButton';
 
+import AuthorChip from './AuthorChip'
+import AuthenticatedHOC from '../hoc/AuthenticatedHOC'
+
 const logout = (props) => {
-  props.history.push('/users/logout')
+  props.router.push('/logout')
 }
 
 const Header = (props) => {
-  const { user } = props
+  const { session, isAuthenticated } = props
 
-  return (
-    <Toolbar>
-      <ToolbarGroup firstChild={true}>
-        {user.name}
-      </ToolbarGroup>
-      <ToolbarGroup>
-        <ToolbarTitle text="Options" />
-        <FontIcon className="muidocs-icon-custom-sort" />
-        <ToolbarSeparator />
-        <RaisedButton
-          label="Logout"
-          secondary={true}
-          onTouchTap={e => logout(props)}
-        />
-      </ToolbarGroup>
-    </Toolbar>
-  )
+  if (isAuthenticated) {
+    return (
+      <Toolbar>
+        <ToolbarGroup firstChild={true}>
+          <ToolbarTitle text="Arbital" />
+        </ToolbarGroup>
+        <ToolbarGroup>
+          <AuthorChip
+            authorName={session.user.name}
+            authorId={session.user.id}
+          />
+          <ToolbarSeparator />
+          <RaisedButton
+            label="Logout"
+            secondary={true}
+            onTouchTap={e => logout(props)}
+          />
+        </ToolbarGroup>
+      </Toolbar>
+    )
+  } else {
+    return <noscript />
+  }
 }
 
-export default Header
+export default AuthenticatedHOC(Header)

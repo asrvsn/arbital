@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 
 import Subheader from 'material-ui/Subheader';
-import List from 'material-ui/List';
+import {List, ListItem} from 'material-ui/List';
 
 import AuthoredListItem from './AuthoredListItem';
 import GetterHOC from '../hoc/GetterHOC'
@@ -20,15 +20,17 @@ const Feed = (props) => {
     <div style={styles.root}>
       <List>
        <Subheader>Feed</Subheader>
-        { items.forEach(item => (
+        { (items == []) ?
+          items.forEach(item => (
             <AuthoredListItem
               text={item.claimText}
               authorId={item.claimAuthorId}
               authorName={item.claimAuthorName}
               hrefPath={'/claims/' + item.claimId}
             />
-          )
-        )
+          ))
+          :
+          <ListItem primaryText={"No items to show"} />
         }
       </List>
     </div>
@@ -40,7 +42,7 @@ export default GetterHOC(
   (props) => ([
     {
       path: '/',
-      mapResponseToProps: (resp) => {items: JSON.parse(resp.body)}
+      mapResponseToProps: (resp) => ({items: resp})
     }
   ])
 )

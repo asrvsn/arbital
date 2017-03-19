@@ -16,13 +16,11 @@ module Arbital.Types
   -- * Claims
   , ClaimID(..)
   , Claim(..)
-  , ClaimItem(..)
-  , toClaimItem
+  , ClaimCreator(..)
   -- * Arguments
   , ArgumentID(..)
   , Argument(..)
-  , ArgumentItem(..)
-  , toArgumentItem
+  , ArgumentCreator(..)
   -- * Commits
   , CommitID(..)
   , Commit(..)
@@ -120,6 +118,7 @@ data Claim = Claim
   , argsFor :: [ArgumentID]
   , argsAgainst :: [ArgumentID]
   , claimAuthorId :: UserID
+  , claimAuthorName :: Name
   , claimCreationDate :: UTCTime
   } deriving (Show)
 
@@ -129,6 +128,7 @@ instance ToJSON Claim where
                     , "argsFor" .= argsFor c
                     , "argsAgainst" .= argsAgainst c
                     , "authorId" .= claimAuthorId c
+                    , "authorName" .= claimAuthorName c
                     , "creationDate" .= claimCreationDate c
                     ]
 instance FromJSON Claim where
@@ -138,30 +138,18 @@ instance FromJSON Claim where
           <*> v .: "argsFor"
           <*> v .: "argsAgainst"
           <*> v .: "authorId"
+          <*> v .: "authorName"
           <*> v .: "creationDate"
 
-data ClaimItem = ClaimItem
-  { iClaimId :: ClaimID
-  , iClaimText :: Text
-  , iClaimAuthorId :: UserID
-  , iClaimAuthorName :: Name
+data ClaimCreator = ClaimCreator 
+  { claimCText :: Text
+  , claimCArgs :: [ArgumentID]
   } deriving (Show)
 
-instance ToJSON ClaimItem where
-  toJSON c = object [ "id" .= iClaimId c
-                    , "text" .= iClaimText c
-                    , "authorId" .= iClaimAuthorId c
-                    , "authorName" .= iClaimAuthorName c
-                    ]
-
-toClaimItem :: Name -> Claim -> ClaimItem
-toClaimItem name c = ClaimItem
-  { iClaimId = claimId c
-  , iClaimText = claimText c
-  , iClaimAuthorId = claimAuthorId c
-  , iClaimAuthorName = name
-  }
-
+instance FromJSON ClaimCreator where
+  parseJSON = withObject "claimcreator" $ \v -> 
+    ClaimCreator <$> v .: "text"
+                 <*> v .: "args"
 
 -- * Arguments
 
@@ -178,6 +166,7 @@ data Argument = Argument
   , argumentSummary :: Text
   , argumentClaims :: [ClaimID]
   , argumentAuthorId :: UserID
+  , argumentAuthorName :: Name
   , argumentCreationDate :: UTCTime
   } deriving (Show)
 
@@ -186,6 +175,7 @@ instance ToJSON Argument where
                     , "text" .= argumentSummary a
                     , "claims" .= argumentClaims a
                     , "authorId" .= argumentAuthorId a
+                    , "authorName" .= argumentAuthorName a
                     , "creationDate" .= argumentCreationDate a
                     ]
 instance FromJSON Argument where
@@ -194,29 +184,18 @@ instance FromJSON Argument where
              <*> v .: "text" 
              <*> v .: "claims"
              <*> v .: "authorId"
+             <*> v .: "authorName"
              <*> v .: "creationDate"
 
-data ArgumentItem = ArgumentItem 
-  { iArgumentId :: ArgumentID
-  , iArgumentSummary :: Text
-  , iArgumentAuthorId :: UserID
-  , iArgumentAuthorName :: Name
+data ArgumentCreator = ArgumentCreator
+  { argumentCSummary :: Text
+  , argumentCClaims :: [ClaimID]
   } deriving (Show)
 
-instance ToJSON ArgumentItem where
-  toJSON a = object [ "id" .= iArgumentId a
-                    , "text" .= iArgumentSummary a
-                    , "authorId" .= iArgumentAuthorId a
-                    , "authorName" .= iArgumentAuthorName a
-                    ]
-
-toArgumentItem :: Name -> Argument -> ArgumentItem
-toArgumentItem name a = ArgumentItem 
-  { iArgumentId = argumentId a
-  , iArgumentSummary = argumentSummary a
-  , iArgumentAuthorId = argumentAuthorId a
-  , iArgumentAuthorName = name
-  }
+instance FromJSON ArgumentCreator where
+  parseJSON = withObject "argumentcreator" $ \v -> 
+    ArgumentCreator <$> v .: "text"
+                    <*> v .: "claims"
 
 -- * Commits
 

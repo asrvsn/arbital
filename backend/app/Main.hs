@@ -27,7 +27,9 @@ main = do
       putStrLn "Exiting."
     Right c -> do
       tid <- myThreadId
-      let onCtrlC = closeConnection c >> throwTo tid ExitSuccess
+      let onCtrlC = do closeConnection c 
+                       putStrLn "[Info] Closed database connection."
+                       throwTo tid ExitSuccess
       installHandler keyboardSignal (Catch onCtrlC) Nothing
       initApp c
       r <- newAppState c
@@ -37,7 +39,7 @@ main = do
 myCors :: Middleware
 myCors = cors (const $ Just policy)
   where
-    policy = simpleCorsResourcePolicy { corsRequestHeaders = ["Content-Type"] }
+    policy = simpleCorsResourcePolicy { corsRequestHeaders = ["Content-Type", "servant-session-id"] }
 
 initApp :: Connection -> IO ()
 initApp c = void $ do

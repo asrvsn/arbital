@@ -16,9 +16,9 @@ import Arbital.Database.Items
 type UsersAPI = 
   
   -- GET to /users/:userid to get a user
-       "users" :> Capture "userid" UserID :> "items" :> "arguments" :> Get '[JSON] [ArgumentItem]
+       "users" :> Capture "userid" UserID :> "arguments" :> Get '[JSON] [Argument]
 
-  :<|> "users" :> Capture "userid" UserID :> "items" :> "claims" :> Get '[JSON] [ClaimItem]
+  :<|> "users" :> Capture "userid" UserID :> "claims" :> Get '[JSON] [Claim]
 
   :<|> "users" :> Capture "userid" UserID :> Get '[JSON] User
 
@@ -27,22 +27,18 @@ type UsersAPI =
 
 usersServer :: Session -> ServerT UsersAPI App
 usersServer _ = 
-        retrieveUserArgItems 
-  :<|>  retrieveUserClaimItems 
+        retrieveUserArgs 
+  :<|>  retrieveUserClaims 
   :<|>  retrieveUser
   :<|>  retrieveAllUsers
 
-retrieveUserArgItems :: UserID -> App [ArgumentItem]
-retrieveUserArgItems i = withDb $ do
-  u <- getUser i
-  as <- mapM getArgument (userArguments u)
-  mapM getArgumentItem as
+retrieveUserArgs :: UserID -> App [Argument]
+retrieveUserArgs i = 
+  withDb $ getUser i >>= (mapM getArgument . userArguments)
 
-retrieveUserClaimItems :: UserID -> App [ClaimItem]
-retrieveUserClaimItems i = withDb $ do 
-  u <- getUser i 
-  cs <- mapM getClaim (userClaims u)
-  mapM getClaimItem cs
+retrieveUserClaims :: UserID -> App [Claim]
+retrieveUserClaims i = 
+  withDb $ getUser i >>= (mapM getClaim . userClaims)
 
 retrieveUser :: UserID -> App User
 retrieveUser = withDb . getUser 

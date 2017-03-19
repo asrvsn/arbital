@@ -166,12 +166,14 @@ instance Persistent Claim where
     <>  contramap argsFor (Enc.value encVal)
     <>  contramap argsAgainst (Enc.value encVal)
     <>  contramap claimAuthorId enc
+    <>  contramap claimAuthorName enc
     <>  contramap claimCreationDate enc
   dec = Claim
     <$> dec
     <*> dec
     <*> Dec.value decVal
     <*> Dec.value decVal
+    <*> dec
     <*> dec
     <*> dec
 
@@ -191,11 +193,13 @@ instance Persistent Argument where
     <>  contramap argumentSummary enc
     <>  contramap argumentClaims (Enc.value encVal)
     <>  contramap argumentAuthorId enc
+    <>  contramap argumentAuthorName enc
     <>  contramap argumentCreationDate enc
   dec = Argument 
     <$> dec
     <*> dec
     <*> Dec.value decVal
+    <*> dec
     <*> dec
     <*> dec
 
@@ -413,6 +417,7 @@ instance HasTable Claim where
       , Column "argsFor" (PArray PText)
       , Column "argsAgainst" (PArray PText)
       , Column "authorId" PText
+      , Column "authorName" PText
       , Column "creationDate" PTimeStampTZ
       ]
     }
@@ -426,6 +431,7 @@ instance HasTable Argument where
       [ Column "text" PText
       , Column "claims" (PArray PText)
       , Column "authorId" PText
+      , Column "authorName" PText
       , Column "creationDate" PTimeStampTZ
       ]
     }

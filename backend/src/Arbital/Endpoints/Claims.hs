@@ -4,12 +4,10 @@
 module Arbital.Endpoints.Claims
   ( ClaimsAPI
   , claimsServer
-  , retrieveAllClaimItems
+  , retrieveAllClaims
   ) where
 
 import Servant
-
-import Control.Monad ((>=>))
 
 import Arbital.Types
 import Arbital.State
@@ -18,23 +16,21 @@ import Arbital.Database.Items
 
 type ClaimsAPI = 
   -- POST to /claims to create a new claim
-       "claims" :> "create" :> ReqBody '[JSON] Claim :> Post '[JSON] Claim
+       "claims" :> "create" :> ReqBody '[JSON] ClaimCreator :> Post '[JSON] Claim
   
-  :<|> "claims" :> Capture "claimid" ClaimID :> "for" :> ReqBody '[JSON] Argument :> Post '[JSON] Argument
+  :<|> "claims" :> Capture "claimid" ClaimID :> "for" :> ReqBody '[JSON] ArgumentCreator :> Post '[JSON] Argument
 
-  :<|> "claims" :> Capture "claimid" ClaimID :> "against" :> ReqBody '[JSON] Argument :> Post '[JSON] Argument
+  :<|> "claims" :> Capture "claimid" ClaimID :> "against" :> ReqBody '[JSON] ArgumentCreator :> Post '[JSON] Argument
 
   -- GET to /claims/:claimid/items to read a claim's argument items
-  :<|> "claims" :> Capture "claimid" ClaimID :> "items" :> "for" :> Get '[JSON] [ArgumentItem]
+  :<|> "claims" :> Capture "claimid" ClaimID :> "for" :> Get '[JSON] [Argument]
 
-  :<|> "claims" :> Capture "claimid" ClaimID :> "items" :> "against" :> Get '[JSON] [ArgumentItem]
+  :<|> "claims" :> Capture "claimid" ClaimID :> "items" :> Get '[JSON] [Argument]
 
   -- GET to /claims/:claimid to read a claim
   :<|> "claims" :> Capture "claimid" ClaimID :> Get '[JSON] Claim
 
-  :<|> "claims" :> "items" :> Capture "claimid" ClaimID :> Get '[JSON] ClaimItem
-
-  :<|> "claims" :> "items" :> Get '[JSON] [ClaimItem]
+  :<|> "claims" :> Get '[JSON] [Claim]
 
 claimsServer :: Session -> ServerT ClaimsAPI App
 claimsServer s = 
@@ -44,50 +40,46 @@ claimsServer s =
   :<|>  retrieveClaimArgsFor
   :<|>  retrieveClaimArgsAgainst
   :<|>  retrieveClaim
-  :<|>  retrieveClaimItem
-  :<|>  retrieveAllClaimItems
+  :<|>  retrieveAllClaims
 
-newClaim :: Session -> Claim -> App Claim
-newClaim s c = withDb $ do
-  c' <- createClaim c
-  update Proxy (userId $ sessionUser s) (addClaim $ claimId c')
-  return c'
+newClaim :: Session -> ClaimCreator -> App Claim
+newClaim s cc = withDb $ do
+  c <- createClaim s cc
+  update Proxy (userId $ sessionUser s) (addClaim $ claimId c)
+  return c
   where
     addClaim i_c u = u { userClaims = i_c : userClaims u}
 
-newArgFor :: Session -> ClaimID -> Argument -> App Argument
-newArgFor s i a = withDb $ do
-  a' <- createArgument a
-  update Proxy i (addArgFor (argumentId a')) 
-  update Proxy (userId $ sessionUser s) (addArg $ argumentId a')
-  return a'
+newArgFor :: Session -> ClaimID -> ArgumentCreator -> App Argument
+newArgFor s i ac = withDb $ do
+  a <- createArgument s ac
+  update Proxy i (addArgFor (argumentId a)) 
+  update Proxy (userId $ sessionUser s) (addArg $ argumentId a)
+  return a
   where
     addArgFor i_a c = c { argsFor = i_a : argsFor c }
     addArg i_a u = u { userArguments = i_a : userArguments u }
 
-newArgAgainst :: Session -> ClaimID -> Argument -> App Argument
-newArgAgainst s i a = withDb $ do
-  a' <- createArgument a
-  update Proxy i (addArgAgainst (argumentId a')) 
-  update Proxy (userId $ sessionUser s) (addArg $ argumentId a')
-  return a'
+newArgAgainst :: Session -> ClaimID -> ArgumentCreator -> App Argument
+newArgAgainst s i ac = withDb $ do
+  a <- createArgument s ac
+  update Proxy i (addArgAgainst (argumentId a)) 
+  update Proxy (userId $ sessionUser s) (addArg $ argumentId a)
+  return a
   where
     addArgAgainst i_a c = c { argsAgainst = i_a : argsAgainst c }
     addArg i_a u = u { userArguments = i_a : userArguments u }
 
-retrieveClaimArgsFor :: ClaimID -> App [ArgumentItem]
+retrieveClaimArgsFor :: ClaimID -> App [Argument]
 retrieveClaimArgsFor i = withDb $ 
-  getClaim i >>= (mapM (getArgument >=> getArgumentItem) . argsFor)
+  getClaim i >>= (mapM getArgument . argsFor)
 
-retrieveClaimArgsAgainst :: ClaimID -> App [ArgumentItem]
+retrieveClaimArgsAgainst :: ClaimID -> App [Argument]
 retrieveClaimArgsAgainst i = withDb $ 
-  getClaim i >>= (mapM (getArgument >=> getArgumentItem) . argsAgainst)
+  getClaim i >>= (mapM getArgument . argsAgainst)
 
 retrieveClaim :: ClaimID -> App Claim
 retrieveClaim = withDb . getClaim
 
-retrieveClaimItem :: ClaimID -> App ClaimItem
-retrieveClaimItem = withDb . (getClaim >=> getClaimItem)
-
-retrieveAllClaimItems :: App [ClaimItem]
-retrieveAllClaimItems = withDb $ selectAll Proxy >>= mapM getClaimItem
+retrieveAllClaims :: App [Claim]
+retrieveAllClaims = withDb $ selectAll Proxy 

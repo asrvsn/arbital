@@ -1,5 +1,8 @@
 import React, { Component, PropTypes } from 'react'
 
+import Chip from 'material-ui/Chip';
+import Avatar from 'material-ui/Avatar';
+
 const styles = {
   chip: {
     margin: 4,
@@ -7,7 +10,7 @@ const styles = {
 }
 
 const goToAuthor = (props, authorId) => {
-  props.history.push('/users/' + authorId)
+  props.router.push('/users/' + authorId)
 }
 
 const AuthorChip = (props) => {

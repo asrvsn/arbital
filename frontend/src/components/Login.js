@@ -74,7 +74,6 @@ class Login extends Component {
   }
 
   _loginSuccess(session) {
-    console.warn('login success')
     const { dispatch, router } = this.props
     dispatch(authSuccess(session))
     router.push('/')

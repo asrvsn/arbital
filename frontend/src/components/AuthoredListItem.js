@@ -1,4 +1,5 @@
 import React, { Component, PropTypes } from 'react'
+import ListItem from 'material-ui/List';
 
 const AuthoredListItem = (props) => {
   const { text, authorName, authorId, hrefPath, history } = props

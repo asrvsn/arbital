@@ -3,6 +3,9 @@ import React, { Component } from 'react'
 import FlatButton from 'material-ui/FlatButton'
 import Dialog from 'material-ui/Dialog'
 import TextField from 'material-ui/TextField'
+import RaisedButton from 'material-ui/RaisedButton';
+
+import backend from '../util/backend'
 
 import CreateArgument from './CreateArgument'
 
@@ -17,14 +20,16 @@ class CreateClaim extends Component {
   constructor(props) {
     super(props)
     this.state = {
-      open: true,
-      childOpen: false
+      childOpen: false,
+      submitted: false,
+      args: [],
+      claim: null
     }
   }
 
   render() {
-    const { open, childOpen } = this.state
-    const claimId = undefined // TODO get from props.location
+    const { open } = this.props
+    const { childOpen, submitted, claim, args } = this.state
 
     const actions = [
       <FlatButton
@@ -33,10 +38,11 @@ class CreateClaim extends Component {
         onTouchTap={() => this.close()}
       />,
       <FlatButton
-        label="Submit"
+        label={submitted ? "Already submitted" : "Submit"}
         primary={true}
         keyboardFocused={true}
         onTouchTap={() => this.submit()}
+        disabled={! submitted}
       />,
     ]
 
@@ -50,6 +56,7 @@ class CreateClaim extends Component {
       >
         <TextField
           hintText="Enter claim text"
+          ref={elem => this.claimTextElem = elem}
         />
         <br />
         <RaisedButton
@@ -57,23 +64,66 @@ class CreateClaim extends Component {
           style={styles.addArgument}
           onTouchTap={() => this.openChild()}
         />
-        { childOpen &&
-          <CreateArgument claimId={claimId} />
+        { childOpen && claim &&
+          <CreateArgument
+            claimId={claim.id}
+            onRequestClose={(argument) => this.closeChild(argument)}
+          />
         }
       </Dialog>
     )
   }
 
-  close() {
-    this.setState({open: false})
+  getClaimCreator() {
+    debugger
+    const { args } = this.state
+    const text = this.claimTextElem.value
+    return {text, args}
   }
 
-  submit() {
-    // TODO submit claim to backend
+  close() {
+    const { onRequestClose } = this.props
+    const { submitted } = this.state
+    if (submitted) {
+      onRequestClose(this.state.claim)
+    } else {
+      this.submit(claim => onRequestClose(claim))
+    }
+  }
+
+  submit(cb = (claim) => {}) {
+    const claimCreator = this.getClaimCreator()
+    backend
+      .post('/claims/create', claimCreator, (err, response, body) => {
+        if (err !== null) {
+          throw err
+        } else {
+          if (response.statusCode == 200) {
+            const claim = JSON.parse(body)
+            this.setState({submitted: true, claim})
+            cb(claim)
+          } else {
+            throw response.statusMessage
+          }
+        }
+      })
   }
 
   openChild() {
-    this.setState({childOpen: true})
+    this.submit(() => {
+      this.setState({childOpen: true})
+    })
+  }
+
+  closeChild(argument) {
+    const { args } = this.state
+    if (argument !== null) {
+      args.push(argument)
+    }
+    this.setState({
+      childOpen: false,
+      args
+    })
   }
 }
 

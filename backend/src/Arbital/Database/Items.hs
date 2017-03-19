@@ -7,11 +7,9 @@ module Arbital.Database.Items
   , createUser
   -- * Claims
   , getClaim
-  , getClaimItem
   , createClaim
   -- * Arguments
   , getArgument
-  , getArgumentItem
   , createArgument
   ) where
 
@@ -43,7 +41,6 @@ createUser email name = do
                , userArguments = []
                , registrationDate = t 
                }
-  liftIO . putStrLn . show $ u
   insert Proxy u
   return u
 
@@ -56,18 +53,22 @@ getClaim i = do
     Nothing -> dbResultErr "claim record not found"
     Just c -> return c
 
-getClaimItem :: Claim -> DbSession ClaimItem
-getClaimItem c = do
-  u <- getUser (claimAuthorId c)
-  return $ toClaimItem (userName u) c
-
-createClaim :: Claim -> DbSession Claim
-createClaim c = do
+createClaim :: Session -> ClaimCreator -> DbSession Claim
+createClaim se cc = do
   t <- liftIO getCurrentTime
   i <- liftIO $ ClaimID <$> freshUid
-  let c' = c { claimId = i, claimCreationDate = t }
-  insert Proxy c'
-  return c'
+  let c = Claim { claimId = i
+                , claimText = claimCText cc
+                , argsFor = claimCArgs cc
+                , argsAgainst = []
+                , claimAuthorId = userId user
+                , claimAuthorName = userName user
+                , claimCreationDate = t
+                }
+  insert Proxy c
+  return c
+  where
+    user = sessionUser se
 
 -- * Arguments
 
@@ -78,15 +79,18 @@ getArgument i = do
     Nothing -> dbResultErr "argument record not found"
     Just a -> return a
 
-getArgumentItem :: Argument -> DbSession ArgumentItem
-getArgumentItem a = do
-  u <- getUser (argumentAuthorId a)
-  return $ toArgumentItem (userName u) a
-
-createArgument :: Argument -> DbSession Argument
-createArgument a = do
+createArgument :: Session -> ArgumentCreator -> DbSession Argument
+createArgument se ac = do
   t <- liftIO getCurrentTime
   i <- liftIO $ ArgumentID <$> freshUid
-  let a' = a { argumentId = i, argumentCreationDate = t }
-  insert Proxy a'
-  return a'
+  let a = Argument { argumentId = i
+                   , argumentSummary = argumentCSummary ac
+                   , argumentClaims = argumentCClaims ac
+                   , argumentAuthorId = userId user
+                   , argumentAuthorName = userName user
+                   , argumentCreationDate = t
+                   }
+  insert Proxy a
+  return a
+  where
+    user = sessionUser se

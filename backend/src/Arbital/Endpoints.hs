@@ -16,10 +16,10 @@ import Arbital.Endpoints.Users
 import Arbital.Endpoints.Authenticated
 
 -- GET to / to get a page of all claims
-type RootAPI = Get '[JSON] [ClaimItem]
+type RootAPI = Get '[JSON] [Claim]
 
 rootServer :: ServerT RootAPI App
-rootServer = retrieveAllClaimItems
+rootServer = retrieveAllClaims
 
 type PrivateAPI = RootAPI 
              :<|> ArgumentsAPI

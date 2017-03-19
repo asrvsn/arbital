@@ -4,7 +4,8 @@ import { Provider } from 'react-redux'
 
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 
-import Header from '../components/Header'
+import LayoutHOC from '../hoc/LayoutHOC'
+
 import Feed from '../components/Feed'
 import Argument from '../components/Argument'
 import Claim from '../components/Claim'
@@ -34,21 +35,34 @@ class AppContainer extends Component {
 
     const children = (
       <div>
-        <Header />
-        <Route path='/' component={Feed} onEnter={requireAuth} />
-        <Route path='/feed' component={Feed} onEnter={requireAuth} />
+        <Route path='/'
+               component={LayoutHOC(Feed)}
+               onEnter={requireAuth}
+               />
 
-        <Route path='/login' component={Login} />
-        <Route path='/logout' component={Logout} onEnter={requireAuth} />
+        <Route path='/login'
+               component={Login}
+               />
 
-        <Route path='/arguments/:argumentid' component={Argument} onEnter={requireAuth} />
+        <Route path='/logout'
+               component={Logout}
+               onEnter={requireAuth}
+               />
 
-        <Route path='/claims/:claimid' component={Claim} onEnter={requireAuth} />
-        <Route path='/claims/:claimid/for' component={CreateArgument} onEnter={requireAuth} />
-        <Route path='/claims/:claimid/against' component={CreateArgument} onEnter={requireAuth} />
-        <Route path='/claims/:claimid/create' component={CreateClaim} onEnter={requireAuth} />
+        <Route path='/arguments/:argumentid'
+               component={LayoutHOC(Argument)}
+               onEnter={requireAuth}
+               />
 
-        <Route path='/users/:userid' component={User} onEnter={requireAuth} />
+        <Route path='/claims/:claimid'
+               component={LayoutHOC(Claim)}
+               onEnter={requireAuth}
+               />
+
+        <Route path='/users/:userid'
+               component={LayoutHOC(User)}
+               onEnter={requireAuth}
+               />
       </div>
     )
 
