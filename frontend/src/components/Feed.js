@@ -1,4 +1,5 @@
 import React, { Component } from 'react'
+import { connect } from 'react-redux'
 
 import Subheader from 'material-ui/Subheader';
 import {List, ListItem} from 'material-ui/List';
@@ -14,23 +15,28 @@ const styles= {
 }
 
 const Feed = (props) => {
-  const {items} = props
+  const { items, router, claimsDirty, reloadData } = props
+
+  if (claimsDirty) {
+    reloadData()
+  }
 
   return (
     <div style={styles.root}>
       <List>
        <Subheader>Feed</Subheader>
         { (items == []) ?
-          items.forEach(item => (
+          <ListItem primaryText={"No items to show"} />
+          :
+          items.map(item => (
             <AuthoredListItem
-              text={item.claimText}
-              authorId={item.claimAuthorId}
-              authorName={item.claimAuthorName}
-              hrefPath={'/claims/' + item.claimId}
+              key={item.id}
+              text={item.text}
+              authorId={item.authorId}
+              authorName={item.authorName}
+              onTouchTap={() => router.push('/claims/' + item.id)}
             />
           ))
-          :
-          <ListItem primaryText={"No items to show"} />
         }
       </List>
     </div>
@@ -38,7 +44,11 @@ const Feed = (props) => {
 }
 
 export default GetterHOC(
-  Feed,
+  connect(
+    ({ claimsDirty }) => ({ claimsDirty }),
+    (dispatch) => ({ dispatch })
+  )(Feed),
+
   (props) => ([
     {
       path: '/',

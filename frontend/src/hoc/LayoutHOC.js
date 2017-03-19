@@ -9,9 +9,9 @@ const LayoutHOC = (ChildComponent) => {
 
     return (
       <div>
-        <Header />
-        <ChildComponent {...props}/>
-        <Footer />
+        <Header {...props} />
+        <ChildComponent {...props} />
+        <Footer {...props} />
       </div>
     )
   }

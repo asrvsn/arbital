@@ -17,10 +17,12 @@ module Arbital.Types
   , ClaimID(..)
   , Claim(..)
   , ClaimCreator(..)
+  , ClaimPage(..)
   -- * Arguments
   , ArgumentID(..)
   , Argument(..)
   , ArgumentCreator(..)
+  , ArgumentPage(..)
   -- * Commits
   , CommitID(..)
   , Commit(..)
@@ -151,6 +153,18 @@ instance FromJSON ClaimCreator where
     ClaimCreator <$> v .: "text"
                  <*> v .: "args"
 
+data ClaimPage = ClaimPage 
+  { pageClaim :: Claim
+  , pageArgsFor ::[Argument]
+  , pageArgsAgainst :: [Argument]
+  } deriving (Show)
+
+instance ToJSON ClaimPage where
+  toJSON p = object [ "claim" .= pageClaim p
+                    , "argsFor" .= pageArgsFor p
+                    , "argsAgainst" .= pageArgsAgainst p
+                    ]
+
 -- * Arguments
 
 newtype ArgumentID = ArgumentID Text deriving (Show, Generic)
@@ -196,6 +210,16 @@ instance FromJSON ArgumentCreator where
   parseJSON = withObject "argumentcreator" $ \v -> 
     ArgumentCreator <$> v .: "text"
                     <*> v .: "claims"
+
+data ArgumentPage = ArgumentPage 
+  { pageArg :: Argument
+  , pageClaims :: [Claim]
+  } deriving (Show)
+
+instance ToJSON ArgumentPage where
+  toJSON p = object [ "arg" .= pageArg p
+                    , "claims" .= pageClaims p
+                    ]
 
 -- * Commits
 

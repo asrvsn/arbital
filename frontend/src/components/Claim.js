@@ -84,14 +84,12 @@ class Claim extends Component {
 
 export default GetterHOC(
   Claim,
-  (props) => ([
-    {
-      path: props.location.pathName,
-      mapResponseToProps: (resp) => {claim: JSON.parse(resp.body)}
-    },
-    {
-      path: props.location.pathName + '/items',
-      mapResponseToProps: (resp) => {items: JSON.parse(resp.body)}
-    }
-  ])
+  (props) => {
+    return [
+      {
+        path: props.location.pathname + '/page',
+        mapResponseToProps: (resp) => {page: resp}
+      }
+    ]
+  }
 )

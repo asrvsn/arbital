@@ -7,6 +7,7 @@ import RaisedButton from 'material-ui/RaisedButton';
 
 import backend from '../util/backend'
 
+import AuthenticatedHOC from '../hoc/AuthenticatedHOC'
 import CreateArgument from './CreateArgument'
 
 const styles = {
@@ -41,8 +42,8 @@ class CreateClaim extends Component {
         label={submitted ? "Already submitted" : "Submit"}
         primary={true}
         keyboardFocused={true}
-        onTouchTap={() => this.submit()}
-        disabled={! submitted}
+        onTouchTap={() => this.submit(claim => this.close(claim))}
+        disabled={submitted}
       />,
     ]
 
@@ -60,7 +61,7 @@ class CreateClaim extends Component {
         />
         <br />
         <RaisedButton
-          label="Add argument"
+          label="Add argument for claim"
           style={styles.addArgument}
           onTouchTap={() => this.openChild()}
         />
@@ -75,38 +76,37 @@ class CreateClaim extends Component {
   }
 
   getClaimCreator() {
-    debugger
     const { args } = this.state
-    const text = this.claimTextElem.value
+    const text = this.claimTextElem.input.value
     return {text, args}
   }
 
-  close() {
-    const { onRequestClose } = this.props
-    const { submitted } = this.state
-    if (submitted) {
-      onRequestClose(this.state.claim)
-    } else {
-      this.submit(claim => onRequestClose(claim))
-    }
+  close(claim) {
+    this.props.onRequestClose(claim)
   }
 
   submit(cb = (claim) => {}) {
-    const claimCreator = this.getClaimCreator()
-    backend
-      .post('/claims/create', claimCreator, (err, response, body) => {
-        if (err !== null) {
-          throw err
-        } else {
-          if (response.statusCode == 200) {
-            const claim = JSON.parse(body)
-            this.setState({submitted: true, claim})
-            cb(claim)
+    const { submitted } = this.state
+    if (submitted) {
+      cb(this.state.claim)
+    } else {
+      const { session } = this.props
+      const claimCreator = this.getClaimCreator()
+      backend
+        .authenticate(session.id)
+        .post('/claims/create', claimCreator, (err, response, body) => {
+          if (err !== null) {
+            throw err
           } else {
-            throw response.statusMessage
+            if (response.statusCode == 200) {
+              this.setState({submitted: true, claim: body})
+              cb(body)
+            } else {
+              throw response.statusMessage
+            }
           }
-        }
-      })
+        })
+    }
   }
 
   openChild() {
@@ -127,4 +127,4 @@ class CreateClaim extends Component {
   }
 }
 
-export default CreateClaim
+export default AuthenticatedHOC(CreateClaim)

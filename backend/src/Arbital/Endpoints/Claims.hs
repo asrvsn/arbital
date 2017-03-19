@@ -22,10 +22,7 @@ type ClaimsAPI =
 
   :<|> "claims" :> Capture "claimid" ClaimID :> "against" :> ReqBody '[JSON] ArgumentCreator :> Post '[JSON] Argument
 
-  -- GET to /claims/:claimid/items to read a claim's argument items
-  :<|> "claims" :> Capture "claimid" ClaimID :> "for" :> Get '[JSON] [Argument]
-
-  :<|> "claims" :> Capture "claimid" ClaimID :> "items" :> Get '[JSON] [Argument]
+  :<|> "claims" :> Capture "claimid" ClaimID :> "page" :> Get '[JSON] ClaimPage
 
   -- GET to /claims/:claimid to read a claim
   :<|> "claims" :> Capture "claimid" ClaimID :> Get '[JSON] Claim
@@ -37,8 +34,7 @@ claimsServer s =
         newClaim s
   :<|>  newArgFor s
   :<|>  newArgAgainst s
-  :<|>  retrieveClaimArgsFor
-  :<|>  retrieveClaimArgsAgainst
+  :<|>  retrieveClaimPage
   :<|>  retrieveClaim
   :<|>  retrieveAllClaims
 
@@ -70,13 +66,12 @@ newArgAgainst s i ac = withDb $ do
     addArgAgainst i_a c = c { argsAgainst = i_a : argsAgainst c }
     addArg i_a u = u { userArguments = i_a : userArguments u }
 
-retrieveClaimArgsFor :: ClaimID -> App [Argument]
-retrieveClaimArgsFor i = withDb $ 
-  getClaim i >>= (mapM getArgument . argsFor)
-
-retrieveClaimArgsAgainst :: ClaimID -> App [Argument]
-retrieveClaimArgsAgainst i = withDb $ 
-  getClaim i >>= (mapM getArgument . argsAgainst)
+retrieveClaimPage :: ClaimID -> App ClaimPage
+retrieveClaimPage i = withDb $ do
+  c <- getClaim i
+  af <- mapM getArgument (argsFor c)
+  aa <- mapM getArgument (argsAgainst c)
+  return $ ClaimPage c af aa
 
 retrieveClaim :: ClaimID -> App Claim
 retrieveClaim = withDb . getClaim

@@ -3,7 +3,7 @@ import React, { Component } from 'react'
 import Dialog from 'material-ui/Dialog'
 import AutoComplete from 'material-ui/AutoComplete';
 
-import GetterHOC from '../hoc/GetterHOC'
+import AuthenticatedHOC from '../hoc/AuthenticatedHOC'
 import AuthoredListItem from './AuthoredListItem';
 
 import backend from '../util/backend'
@@ -57,12 +57,4 @@ class CreateArgument extends Component {
   }
 }
 
-export default GetterHOC(
-  CreateArgument,
-  (props) => ([
-    {
-      path: '/claims/items' + props.claimId,
-      mapResponseToProps: (resp) => {claimItem: JSON.parse(resp.body)}
-    }
-  ])
-)
+export default AuthenticatedHOC(CreateArgument)

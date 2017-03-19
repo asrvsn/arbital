@@ -20,5 +20,14 @@ export default {
         return state
       }
     }
+  },
+
+  claimsDirty: (state = false, action) => {
+    switch(action.type) {
+      case 'SET_CLAIMS_DIRTY':
+        return action.state
+      default:
+        return state
+    }
   }
 }
