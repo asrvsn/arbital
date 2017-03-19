@@ -68,25 +68,30 @@ export default (ChildComponent, getter) => {
     render() {
       const { childProps, gettingState, error } = this.state
 
-      switch(gettingState) {
-        case 'LOADING':
-          return (
-            <div style={styles.loader}>
-              <span>Fetching data</span>
-              <LinearProgress mode="indeterminate" />
-            </div>
-          )
-        case 'FAILED':
-          return <h1>{"Error fetching data: " + error}</h1>
-        case 'SUCCEEDED': {
-          const allChildProps = Object.assign({},
-            this.props,
-            childProps
-          )
-          return <ChildComponent {...allChildProps} />
-        }
+      if (childProps.open === false) {
+        return null
+      } else {
+        switch(gettingState) {
+          case 'LOADING':
+            return (
+              <div style={styles.loader}>
+                <span>Fetching data</span>
+                <LinearProgress mode="indeterminate" />
+              </div>
+            )
+          case 'FAILED':
+            return <h1>{"Error fetching data: " + error}</h1>
+          case 'SUCCEEDED': {
+            const allChildProps = Object.assign({},
+              this.props,
+              childProps
+            )
+            return <ChildComponent {...allChildProps} />
+          }
 
+        }
       }
+
     }
   }
 
