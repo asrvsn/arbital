@@ -64,19 +64,19 @@ class Login extends Component {
 
     return (
       <Dialog
-        title={isAuthenticated ? 'You are already logged in.' : title}
+        title={title}
         modal={true}
         open={true}
       >
-        <Link to='/feed'>asdf</Link>
         <div id='google-signin-button' style={styles.googleSignin} />
       </Dialog>
     )
   }
 
   _loginSuccess(session) {
-    const { onAuthSuccess, router } = this.props
-    onAuthSuccess(session)
+    console.warn('login success')
+    const { dispatch, router } = this.props
+    dispatch(authSuccess(session))
     router.push('/')
   }
 
@@ -86,13 +86,5 @@ class Login extends Component {
 }
 
 const mapStateToProps = ({ isAuthenticated }) => ({ isAuthenticated })
-const mapDispatchToProps = (dispatch) => ({
-  onAuthSuccess: (session) => {
-    dispatch(authSuccess(session))
-  }
-})
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(Login)
+export default connect(mapStateToProps)(Login)

@@ -4,6 +4,8 @@ import { browserHistory } from 'react-router'
 import makeRootReducer from './reducers'
 import { updateLocation } from './location'
 
+import myReducers from '../reducers'
+
 export default (initialState = {}) => {
   // ======================================================
   // Middleware Configuration
@@ -28,24 +30,26 @@ export default (initialState = {}) => {
   // Store Instantiation and HMR Setup
   // ======================================================
   const store = createStore(
-    makeRootReducer(),
+    makeRootReducer(myReducers),
     initialState,
     composeEnhancers(
       applyMiddleware(...middleware),
       ...enhancers
     )
   )
-  store.asyncReducers = {}
 
   // To unsubscribe, invoke `store.unsubscribeHistory()` anytime
   store.unsubscribeHistory = browserHistory.listen(updateLocation(store))
 
-  if (module.hot) {
-    module.hot.accept('./reducers', () => {
-      const reducers = require('./reducers').default
-      store.replaceReducer(reducers(store.asyncReducers))
-    })
-  }
+  // (anand) this shit is useless
+  // store.asyncReducers = {}
+  // if (module.hot) {
+  //   module.hot.accept('./reducers', () => {
+  //     const reducers = require('./reducers').default
+  //     store.replaceReducer(reducers(store.asyncReducers))
+  //     console.warn('HMR store', store)
+  //   })
+  // }
 
   return store
 }

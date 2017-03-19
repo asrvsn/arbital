@@ -28,7 +28,6 @@ class AppContainer extends Component {
 
     const requireAuth = (nextState, replace) => {
       if (! store.getState().isAuthenticated) {
-        console.warn('going to login')
         replace('/login')
       }
     }
