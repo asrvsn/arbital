@@ -30,7 +30,6 @@ import           Servant.Server.Experimental.Auth ( AuthHandler
 import           Servant.Server ( Context ((:.)
                                 , EmptyContext)
                                 , err401
-                                , errBody
                                 )
 
 import           Arbital.Types
@@ -84,12 +83,12 @@ login = \case
 authHandler :: AppState -> AuthHandler Request Session
 authHandler r = mkAuthHandler $ \req -> 
   case lookup "servant-session-id" (requestHeaders req) of
-    Nothing -> throwError (err401 { errBody = "Missing auth header" })
+    Nothing -> throwError (err401 { errReasonPhrase = "Missing auth header" })
     Just s -> do
       mse <- runAppT r $ 
         useSession $ SessionID (decodeUtf8 s)
       case mse of
-        Nothing -> throwError (err401 { errBody = "Session not found" })
+        Nothing -> throwError (err401 { errReasonPhrase = "Session not found" })
         Just se -> return se
 
 -- | The context that will be made available to request handlers. We supply the
@@ -106,7 +105,6 @@ gapiError err =
 
 getGapiUser :: GoogleAuthResponse -> App User
 getGapiUser ar = do
-  liftIO $ putStrLn $ "got here: " ++ show ar
   mUser <- withDb $ selectWhere1 Proxy (Field "email" (authEmail ar))
   case mUser of 
     Just user -> return user

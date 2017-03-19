@@ -1,7 +1,8 @@
 import React, { Component, PropTypes } from 'react'
 import { connect } from 'react-redux'
+import { Link } from 'react-router'
 
-import authSuccess from '../actions'
+import { authSuccess } from '../actions'
 import backend from '../util/backend'
 
 import Dialog from 'material-ui/Dialog'
@@ -31,31 +32,34 @@ class Login extends Component {
   }
 
   componentDidMount() {
+    const { onAuthSuccess, router } = this.props
+
     gapi.signin2.render('google-signin-button', {
       onsuccess: (user) => {
         const { id_token } = user.getAuthResponse()
         const url = 'http://' + window.location.hostname + ':5000/login'
-        try {
-          backend
-            .post('/login', {tag: 'GoogleTokenAuth', idToken: id_token})
-            .on('response', response => {
+        const req = backend.post(
+          '/login',
+          {tag: 'GoogleTokenAuth', idToken: id_token},
+          (err, response, body) => {
+            if (err !== null) {
+              this._loginErr(err)
+            } else {
               if (response.statusCode == 200) {
-                onAuthSuccess(JSON.parse(response.body))
-                history.push('/')
+                this._loginSuccess(body)
               } else {
                 this._loginErr(response.statusMessage)
               }
-            })
-        } catch (e) {
-          this._loginErr(e)
-        }
+            }
+          }
+        )
       },
       ...properties.googleSignin
     })
   }
 
   render() {
-    const { isAuthenticated, onAuthSuccess, history } = this.props
+    const { isAuthenticated } = this.props
     const { title } = this.state
 
     return (
@@ -64,9 +68,16 @@ class Login extends Component {
         modal={true}
         open={true}
       >
+        <Link to='/feed'>asdf</Link>
         <div id='google-signin-button' style={styles.googleSignin} />
       </Dialog>
     )
+  }
+
+  _loginSuccess(session) {
+    const { onAuthSuccess, router } = this.props
+    onAuthSuccess(session)
+    router.push('/')
   }
 
   _loginErr(err) {

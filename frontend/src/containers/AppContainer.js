@@ -27,36 +27,29 @@ class AppContainer extends Component {
     const { store } = this.props
 
     const requireAuth = (nextState, replace) => {
-      replace('/login')
+      if (! store.getState().isAuthenticated) {
+        console.warn('going to login')
+        replace('/login')
+      }
     }
 
     const children = (
       <div>
         <Header />
-        <Route path='/'>
-          <IndexRoute component={Feed} onEnter={requireAuth} />
+        <Route path='/' component={Feed} onEnter={requireAuth} />
+        <Route path='/feed' component={Feed} onEnter={requireAuth} />
 
-          <Route path='login' component={Login} />
-          <Route path='logout' component={Logout} onEnter={requireAuth} />
+        <Route path='/login' component={Login} />
+        <Route path='/logout' component={Logout} onEnter={requireAuth} />
 
-          <Route path='arguments'>
-            <Route path=':argumentid' component={Argument} onEnter={requireAuth} />
-          </Route>
+        <Route path='/arguments/:argumentid' component={Argument} onEnter={requireAuth} />
 
-          <Route path='claims'>
-            <Route path=':claimid'>
-              <IndexRoute component={Claim} onEnter={requireAuth} />
-              <Route path='for' component={CreateArgument} onEnter={requireAuth} />
-              <Route path='against' component={CreateArgument} onEnter={requireAuth} />
-            </Route>
-            <Route path='create' component={CreateClaim} onEnter={requireAuth} />
-          </Route>
+        <Route path='/claims/:claimid' component={Claim} onEnter={requireAuth} />
+        <Route path='/claims/:claimid/for' component={CreateArgument} onEnter={requireAuth} />
+        <Route path='/claims/:claimid/against' component={CreateArgument} onEnter={requireAuth} />
+        <Route path='/claims/:claimid/create' component={CreateClaim} onEnter={requireAuth} />
 
-          <Route path='users'>
-            <Route path=':userid' component={User} onEnter={requireAuth} />
-          </Route>
-
-        </Route>
+        <Route path='/users/:userid' component={User} onEnter={requireAuth} />
       </div>
     )
 
