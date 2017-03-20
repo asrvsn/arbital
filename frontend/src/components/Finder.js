@@ -8,8 +8,20 @@ import MenuItem from 'material-ui/MenuItem';
 import Divider from 'material-ui/Divider';
 
 import backend from '../util/backend'
-import AuthoredListItem from './AuthoredListItem'
-import AuthenticatedHOC from '../hoc/AuthenticatedHOC'
+import AuthoredListItem from './items/AuthoredListItem'
+import AuthenticatedHOC from './hoc/AuthenticatedHOC'
+
+const styles = {
+  firstRow: {
+    display: 'flex',
+    flexDirection: 'row'
+  },
+  dropdown: {
+  },
+  input: {
+    flexGrow: 1
+  }
+}
 
 class Finder extends Component {
   constructor(props) {
@@ -23,31 +35,57 @@ class Finder extends Component {
 
   componentDidMount() {
     const { searchType } = this.props
-    if (searchType) {
+    if (!! searchType) {
       this.setSearchType(searchType)
     }
   }
 
   render() {
-    const { mkResult } = this.props
+    const { dropDownEnabled } = this.props
     const { dynSearchType, searchText, results } = this.state
+    const mkResult = (result) => {
+      switch(dynSearchType) {
+        case 'claims': {
+          const { text, authorId, authorName } = result
+          return {text, userId: authorId, userName: authorName}
+        }
+        case 'arguments': {
+          const { text, authorId, authorName } = result
+          return {text, userId: authorId, userName: authorName}
+        }
+        case 'users': {
+          const { email, id, name } = result
+          return {text: email, userId: id, userName: name}
+        }
+      }
+    }
 
     return (
       <Card>
 
-        <DropDownMenu
-          value={dynSearchType}
-          onChange={(e, i, v) => this.setSearchType(v)}
-        >
-          <MenuItem value={1} primaryText="claims" />
-          <MenuItem value={2} primaryText="arguments" />
-          <MenuItem value={2} primaryText="users" />
-        </DropDownMenu>
-        <TextField
-          hintText="search..."
-          vale={searchText}
-          onChange={e => this.onChange(e)}
-        />
+        <div style={styles.firstRow}>
+
+          { dropDownEnabled &&
+            <DropDownMenu
+              value={dynSearchType}
+              onChange={(e, i, v) => this.setSearchType(v)}
+              style={styles.dropdown}
+            >
+              <MenuItem value={"claims"} primaryText="claims" />
+              <MenuItem value={"arguments"} primaryText="arguments" />
+              <MenuItem value={"users"} primaryText="users" />
+            </DropDownMenu>
+          }
+
+          <TextField
+            hintText="search..."
+            value={searchText}
+            onChange={e => this.onChange(e)}
+            onKeyDown={e => this.onKeyDown(e)}
+            style={styles.input}
+          />
+
+        </div>
 
         <Divider />
 
@@ -57,6 +95,7 @@ class Finder extends Component {
                 const {text, userId, userName} = mkResult(result)
                 return (
                   <AuthoredListItem
+                    key={result.id}
                     text={text}
                     authorId={userId}
                     authorName={userName}
@@ -65,7 +104,7 @@ class Finder extends Component {
                 )
               })
             :
-              <ListItem primaryText="Hit enter to search" />
+              <ListItem primaryText="(nothing) hit enter to search" />
           }
         </List>
 
@@ -78,31 +117,44 @@ class Finder extends Component {
   }
 
   onChange(e) {
-    debugger
+    this.setState({ searchText: e.target.value })
+  }
+
+  onKeyDown(e) {
+    if (e.key === 'Enter') {
+      this.reloadSearch()
+    }
   }
 
   reloadSearch() {
     const { session } = this.props
     const { dynSearchType, searchText } = this.state
-    const url = `/${dynSearchType}/search/${searchText}`
 
-    backend
-      .authenticate(session.id)
-      .get(url, (err, response, body) => {
-        if (err !== null) {
-          throw err
-        } else {
-          if (response.statusCode == 200) {
-            this.setState({results: body})
+    if (searchText === "") {
+      this.setState({ results: [] })
+    } else {
+      const url = `/${dynSearchType}/search/${searchText}`
+
+      backend
+        .authenticate(session.id)
+        .get(url, (err, response, body) => {
+          if (err !== null) {
+            throw err
           } else {
-            throw response.statusMessage
+            if (response.statusCode == 200) {
+              this.setState({ results: JSON.parse(body) })
+            } else {
+              throw response.statusMessage
+            }
           }
-        }
-      })
+        })
+    }
   }
 
   selectResult(result) {
     const { onRequestClose } = this.props
+    const { dynSearchType } = this.state
+    result.type = dynSearchType
     onRequestClose(result)
   }
 }

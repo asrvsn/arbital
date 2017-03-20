@@ -5,9 +5,10 @@ import shortid from 'shortid'
 
 import LinearProgress from 'material-ui/LinearProgress';
 
-import backend from '../util/backend'
+import backend from '../../util/backend'
+import { registerReloadListener, unregisterReloadListener } from '../../actions'
+
 import AuthenticatedHOC from './AuthenticatedHOC'
-import { registerReloadListener, unregisterReloadListener } from '../actions'
 
 /**
   NOTE: if using this HOC, do not use AuthenticatedHOC!
@@ -22,6 +23,7 @@ const styles = {
 }
 
 export default (ChildComponent, getter) => {
+
   const name = shortid.generate()
 
   class GetterComponent extends Component {
@@ -54,8 +56,10 @@ export default (ChildComponent, getter) => {
     render() {
       const { childProps, gettingState, error } = this.state
 
-      if (childProps.open === false) {
-        return null
+      if (Object.keys(getter(this.props)).length == 0) {
+
+        return <ChildComponent {...this.props} />
+
       } else {
         switch(gettingState) {
           case 'LOADING':

@@ -3,7 +3,7 @@ import React, { Component } from 'react'
 import {Tabs, Tab} from 'material-ui/Tabs'
 import {List, ListItem} from 'material-ui/List'
 
-import AuthoredListItem from './AuthoredListItem';
+import AuthoredListItem from '../items/AuthoredListItem';
 import GetterHOC from '../hoc/GetterHOC'
 
 const User = (props) => {
@@ -29,7 +29,7 @@ const User = (props) => {
                 />
               )
             :
-              <ListItem primaryText="Nothing here" />
+              <ListItem primaryText="(nothing)" />
           }
         </List>
       </Tab>

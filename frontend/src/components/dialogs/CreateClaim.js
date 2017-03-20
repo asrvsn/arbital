@@ -5,7 +5,7 @@ import Dialog from 'material-ui/Dialog'
 import TextField from 'material-ui/TextField'
 import RaisedButton from 'material-ui/RaisedButton';
 
-import backend from '../util/backend'
+import backend from '../../util/backend'
 
 import AuthenticatedHOC from '../hoc/AuthenticatedHOC'
 import CreateArgument from './CreateArgument'
@@ -57,6 +57,7 @@ class CreateClaim extends Component {
         <TextField
           hintText="Enter claim text"
           ref={elem => this.claimTextElem = elem}
+          fullWidth={true}
         />
         <br />
         <RaisedButton
@@ -68,6 +69,7 @@ class CreateClaim extends Component {
           <CreateArgument
             linkedClaimId={claim.id}
             onRequestClose={(argument) => this.closeChild(argument)}
+            open={childOpen}
           />
         }
       </Dialog>

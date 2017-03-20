@@ -1,9 +1,9 @@
 import React, { Component, PropTypes } from 'react'
 
-import Header from '../components/Header'
-import Footer from '../components/Footer'
+import Header from '../Header'
+import Footer from '../Footer'
 
-const LayoutHOC = (ChildComponent) => {
+const PageHOC = (ChildComponent) => {
   return (props) => {
     const { isAuthenticated } = props
 
@@ -17,4 +17,4 @@ const LayoutHOC = (ChildComponent) => {
   }
 }
 
-export default LayoutHOC
+export default PageHOC

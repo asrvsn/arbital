@@ -4,16 +4,14 @@ import { Provider } from 'react-redux'
 
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 
-import LayoutHOC from '../hoc/LayoutHOC'
+import PageHOC from '../components/hoc/PageHOC'
 
-import Feed from '../components/Feed'
-import Argument from '../components/Argument'
-import Claim from '../components/Claim'
-import CreateArgument from '../components/CreateArgument'
-import CreateClaim from '../components/CreateClaim'
-import Login from '../components/Login'
-import Logout from '../components/Logout'
-import User from '../components/User'
+import Feed from '../components/pages/Feed'
+import Argument from '../components/pages/Argument'
+import Claim from '../components/pages/Claim'
+import User from '../components/pages/User'
+import Login from '../components/pages/Login'
+import Logout from '../components/pages/Logout'
 
 class AppContainer extends Component {
   static propTypes = {
@@ -36,7 +34,7 @@ class AppContainer extends Component {
     const children = (
       <div>
         <Route path='/'
-               component={LayoutHOC(Feed)}
+               component={PageHOC(Feed)}
                onEnter={requireAuth}
                />
 
@@ -50,17 +48,17 @@ class AppContainer extends Component {
                />
 
         <Route path='/arguments/:argumentid'
-               component={LayoutHOC(Argument)}
+               component={PageHOC(Argument)}
                onEnter={requireAuth}
                />
 
         <Route path='/claims/:claimid'
-               component={LayoutHOC(Claim)}
+               component={PageHOC(Claim)}
                onEnter={requireAuth}
                />
 
         <Route path='/users/:userid'
-               component={LayoutHOC(User)}
+               component={PageHOC(User)}
                onEnter={requireAuth}
                />
       </div>

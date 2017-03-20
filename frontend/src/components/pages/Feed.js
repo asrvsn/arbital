@@ -2,8 +2,9 @@ import React, { Component } from 'react'
 
 import {Card, CardTitle, CardHeader} from 'material-ui/Card';
 import {List, ListItem} from 'material-ui/List';
+import Divider from 'material-ui/Divider';
 
-import AuthoredListItem from './AuthoredListItem';
+import AuthoredListItem from '../items/AuthoredListItem';
 import GetterHOC from '../hoc/GetterHOC'
 
 const styles= {
@@ -21,21 +22,22 @@ const Feed = (props) => {
   return (
     <div style={styles.root}>
       <Card>
-        <CardHeader title='feed'/>
+        <CardTitle title='Feed'/>
+        <Divider />
         <List>
-          { (items == []) ?
-            <ListItem primaryText={"No items to show"} />
+          { (items.length > 0) ?
+              items.map(item => (
+                <AuthoredListItem
+                  key={item.id}
+                  text={item.text}
+                  authorId={item.authorId}
+                  authorName={item.authorName}
+                  onTouchTap={() => goToItem(item)}
+                  onAuthorTouchTap={() => goToAuthor(item)}
+                />
+              ))
             :
-            items.map(item => (
-              <AuthoredListItem
-                key={item.id}
-                text={item.text}
-                authorId={item.authorId}
-                authorName={item.authorName}
-                onTouchTap={() => goToItem(item)}
-                onAuthorTouchTap={() => goToAuthor(item)}
-              />
-            ))
+              <ListItem primaryText={"No items to show"} />
           }
         </List>
       </Card>

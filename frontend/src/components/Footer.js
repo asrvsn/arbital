@@ -7,8 +7,8 @@ import NavigationClose from 'material-ui/svg-icons/navigation/close'
 import ContentAddBox from 'material-ui/svg-icons/content/add-box';
 import AvPlaylistAdd from 'material-ui/svg-icons/av/playlist-add';
 
-import CreateClaim from './CreateClaim'
-import CreateArgument from './CreateArgument'
+import CreateClaim from './dialogs/CreateClaim'
+import CreateArgument from './dialogs/CreateArgument'
 import { fireReload } from '../actions'
 
 const styles = {
@@ -65,14 +65,14 @@ class Footer extends Component {
         return (
           <CreateClaim
             open={true}
-            onRequestClose={claim => this.closeCreatorAndReload('claims')}
+            onRequestClose={claim => this.closeCreatorAndReload(claim, 'claims')}
           />
         )
       case 'argument':
         return (
           <CreateArgument
             open={true}
-            onRequestClose={arg => this.closeCreatorAndReload('arguments')}
+            onRequestClose={arg => this.closeCreatorAndReload(arg, 'arguments')}
           />
         )
       default:
@@ -84,10 +84,11 @@ class Footer extends Component {
     this.setState({creatorOpen: creator})
   }
 
-  closeCreatorAndReload(dataSource) {
-    const { dispatch } = this.props
+  closeCreatorAndReload(result, dataSource) {
     this.setState({creatorOpen: null})
-    dispatch(fireReload(dataSource))
+    if (result !== null) {
+      this.props.dispatch(fireReload(dataSource))
+    }
   }
 }
 

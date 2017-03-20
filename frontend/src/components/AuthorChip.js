@@ -10,7 +10,7 @@ const styles = {
 }
 
 const AuthorChip = (props) => {
-  const { authorName, authorId, onTouchTap } = props
+  const { authorName, onTouchTap } = props
 
   return (
     <Chip
