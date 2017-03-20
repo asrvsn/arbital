@@ -2,6 +2,19 @@
 Capture the state of the debate. 
 
 # Installation
+## Postgres configuration
+Install requirements
+```bash
+$ sudo apt-get update
+$ sudo apt-get install postgresql postgresql-contrib
+```
+Configure db. Change the user/password credentials in `backend/src/Arbital/Constants.hs` to match current user.
+```bash
+$ psql
+user=# CREATE DATABASE arbital;
+user=# \c arbital
+arbital=# CREATE EXTENSION pg_trgm;
+```
 ## Backend
 Make sure you have postgres installed, and a database called `arbital`.
 ```bash
