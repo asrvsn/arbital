@@ -94,12 +94,19 @@ export default (ChildComponent, getter) => {
             } else {
               if (response.statusCode == 200) {
                 const { childProps } = this.state
-                const newChildProps = Object.assign(
-                  {},
-                  childProps,
-                  mapResponseToProps(JSON.parse(body))
-                )
-                this.setState({childProps: newChildProps, gettingState: 'SUCCEEDED'})
+                const otherProps = mapResponseToProps(JSON.parse(body))
+                if (typeof otherProps == "object") {
+                  const newChildProps = Object.assign(
+                    {},
+                    childProps,
+                    otherProps
+                  )
+                  this.setState({childProps: newChildProps, gettingState: 'SUCCEEDED'})
+                } else {
+                  const err = 'mapResponseToProps expected object, got ' + String(otherProps)
+                  this.setState({gettingState: 'FAILED', error: err})
+                  throw err
+                }
               } else {
                 this.setState({gettingState: 'FAILED', error: response.statusMessage})
               }

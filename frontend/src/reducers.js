@@ -32,8 +32,10 @@ export default {
         return state_
       }
       case 'UNREGISTER_RELOAD_LISTENER': {
+        const { name } = action
+        console.warn('UNREGISTER_RELOAD_LISTENER', name)
         const state_ = Object.assign({}, state)
-        delete state_[action.name]
+        delete state_[name]
         return state_
       }
       case 'FIRE_RELOAD': {

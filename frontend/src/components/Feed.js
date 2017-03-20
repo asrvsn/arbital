@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 
-import Subheader from 'material-ui/Subheader';
+import {Card, CardTitle, CardHeader} from 'material-ui/Card';
 import {List, ListItem} from 'material-ui/List';
 
 import AuthoredListItem from './AuthoredListItem';
@@ -15,25 +15,30 @@ const styles= {
 
 const Feed = (props) => {
   const { items, router } = props
+  const goToItem = (item) => router.push('/claims/' + item.id)
+  const goToAuthor = (item) => router.push('/users/' + item.authorId)
 
   return (
     <div style={styles.root}>
-      <List>
-       <Subheader>Feed</Subheader>
-        { (items == []) ?
-          <ListItem primaryText={"No items to show"} />
-          :
-          items.map(item => (
-            <AuthoredListItem
-              key={item.id}
-              text={item.text}
-              authorId={item.authorId}
-              authorName={item.authorName}
-              onTouchTap={() => router.push('/claims/' + item.id)}
-            />
-          ))
-        }
-      </List>
+      <Card>
+        <CardHeader title='feed'/>
+        <List>
+          { (items == []) ?
+            <ListItem primaryText={"No items to show"} />
+            :
+            items.map(item => (
+              <AuthoredListItem
+                key={item.id}
+                text={item.text}
+                authorId={item.authorId}
+                authorName={item.authorName}
+                onTouchTap={() => goToItem(item)}
+                onAuthorTouchTap={() => goToAuthor(item)}
+              />
+            ))
+          }
+        </List>
+      </Card>
     </div>
   )
 }

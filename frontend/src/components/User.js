@@ -1,37 +1,48 @@
 import React, { Component } from 'react'
 
 import {Tabs, Tab} from 'material-ui/Tabs'
-import {List} from 'material-ui/List'
+import {List, ListItem} from 'material-ui/List'
 
 import AuthoredListItem from './AuthoredListItem';
 import GetterHOC from '../hoc/GetterHOC'
 
 const User = (props) => {
-  const { claimItems, argumentItems } = props
+  const { page, router } = props
+  const { user, claims, args } = page
+
+  const goToClaim = (claim) => router.push('/claims/' + claim.id)
+  const goToArg = (arg) => router.push('/arguments/' + arg.id)
 
   return (
     <Tabs>
       <Tab label="Claims" >
         <List>
-          { claimItems.map(item =>
-              <AuthoredListItem
-                text={item.claimText}
-                authorId={item.claimAuthorId}
-                authorName={item.claimAuthorName}
-                hrefPath={'/claims/' + item.claimId}
-              />
-            )
+          { (claims.length > 0) ?
+              claims.map(claim =>
+                <AuthoredListItem
+                  key={claim.id}
+                  text={claim.text}
+                  authorId={claim.authorId}
+                  authorName={claim.authorName}
+                  onTouchTap={e => goToClaim(claim)}
+                  onAuthorTouchTap={e => {}}
+                />
+              )
+            :
+              <ListItem primaryText="Nothing here" />
           }
         </List>
       </Tab>
       <Tab label="Arguments" >
         <List>
-          { argumentItems.map(item =>
+          { args.map(arg =>
               <AuthoredListItem
-                text={item.argumentText}
-                authorId={item.argumentAuthorId}
-                authorName={item.argumentAuthorName}
-                hrefPath={'/arguments/' + item.argumentId}
+                key={arg.id}
+                text={arg.text}
+                authorId={arg.authorId}
+                authorName={arg.authorName}
+                onTouchTap={e => goToArg(arg)}
+                onAuthorTouchTap={e => {}}
               />
             )
           }
@@ -43,18 +54,10 @@ const User = (props) => {
 
 export default GetterHOC(
   User,
-  (props) => ([
-    {
-      path: props.location.pathName, // TODO
-      mapResponseToProps: (resp) => {user: JSON.parse(resp.body)}
+  (props) => ({
+    user: {
+      path: props.location.pathname + '/page',
+      mapResponseToProps: (resp) => ({page: resp})
     },
-    {
-      path: props.location.pathName + '/items/arguments',
-      mapResponseToProps: (resp) => {argumentItems: JSON.parse(resp.body)}
-    },
-    {
-      path: props.location.pathName + '/items/claims',
-      mapResponseToProps: (resp) => {claimItems: JSON.parse(resp.body)}
-    }
-  ])
+  })
 )

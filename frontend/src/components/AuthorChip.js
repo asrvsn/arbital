@@ -9,18 +9,14 @@ const styles = {
   },
 }
 
-const goToAuthor = (props, authorId) => {
-  props.router.push('/users/' + authorId)
-}
-
 const AuthorChip = (props) => {
-  const { authorName, authorId } = props
+  const { authorName, authorId, onTouchTap } = props
 
   return (
-    <Chip onTouchTap={e =>
-            goToAuthor(props, authorId)
-          }
-          style={styles.chip}>
+    <Chip
+      onTouchTap={e => onTouchTap(e)}
+      style={styles.chip}
+    >
       <Avatar size={32}>{authorName[0]}</Avatar>
       {authorName}
     </Chip>

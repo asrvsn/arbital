@@ -10,13 +10,18 @@ const styles = {
 }
 
 const AuthoredListItem = (props) => {
-  const { text, authorName, authorId, onTouchTap } = props
+  const { text, authorName, authorId, onTouchTap, onAuthorTouchTap } = props
 
   const authorIcon = (
     <div style={styles.chip}>
       <AuthorChip
         authorName={authorName}
         authorId={authorId}
+        onTouchTap={e => {
+          e.preventDefault()
+          e.stopPropagation()
+          onAuthorTouchTap(e)
+        }}
       />
     </div>
   )
@@ -24,7 +29,7 @@ const AuthoredListItem = (props) => {
   return (
     <ListItem
       primaryText={text}
-      onTouchTap={e => onTouchTap()}
+      onTouchTap={e => onTouchTap(e)}
     >
       {authorIcon}
     </ListItem>

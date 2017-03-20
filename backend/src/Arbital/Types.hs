@@ -9,6 +9,7 @@ module Arbital.Types
   , UserID(..)
   , Name(..)
   , User(..)
+  , UserPage(..)
   -- * Sessions
   , SessionID(..)
   , Session(..)
@@ -81,6 +82,18 @@ instance FromJSON User where
          <*> v .: "claims"
          <*> v .: "arguments"
          <*> v .: "registrationDate"
+
+data UserPage = UserPage 
+  { pageUser :: User
+  , pageUserClaims :: [Claim]
+  , pageUserArgs :: [Argument]
+  } deriving (Show)
+
+instance ToJSON UserPage where
+  toJSON p = object [ "user" .= pageUser p
+                    , "claims" .= pageUserClaims p
+                    , "args" .= pageUserArgs p
+                    ]
 
 -- * Sessions
 
