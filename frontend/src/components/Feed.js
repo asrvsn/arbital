@@ -1,5 +1,4 @@
 import React, { Component } from 'react'
-import { connect } from 'react-redux'
 
 import Subheader from 'material-ui/Subheader';
 import {List, ListItem} from 'material-ui/List';
@@ -15,11 +14,7 @@ const styles= {
 }
 
 const Feed = (props) => {
-  const { items, router, claimsDirty, reloadData } = props
-
-  if (claimsDirty) {
-    reloadData()
-  }
+  const { items, router } = props
 
   return (
     <div style={styles.root}>
@@ -44,15 +39,11 @@ const Feed = (props) => {
 }
 
 export default GetterHOC(
-  connect(
-    ({ claimsDirty }) => ({ claimsDirty }),
-    (dispatch) => ({ dispatch })
-  )(Feed),
-
-  (props) => ([
-    {
+  Feed,
+  (props) => ({
+    claims: {
       path: '/',
       mapResponseToProps: (resp) => ({items: resp})
     }
-  ])
+  })
 )

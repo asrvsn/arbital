@@ -22,12 +22,31 @@ export default {
     }
   },
 
-  claimsDirty: (state = false, action) => {
+  dataReloadListeners: (state = {}, action) => {
     switch(action.type) {
-      case 'SET_CLAIMS_DIRTY':
-        return action.state
-      default:
+      case 'REGISTER_RELOAD_LISTENER': {
+        const { name, listener } = action
+        console.warn('REGISTER_RELOAD_LISTENER', name)
+        const state_ = Object.assign({}, state)
+        state_[name] = listener
+        return state_
+      }
+      case 'UNREGISTER_RELOAD_LISTENER': {
+        const state_ = Object.assign({}, state)
+        delete state_[action.name]
+        return state_
+      }
+      case 'FIRE_RELOAD': {
+        console.warn('FIRE_RELOAD', action.dataSource)
+        // XXX (anand) this does effectful things. Figure out a better way.
+        Object.values(state).forEach(
+          listener => listener(action.dataSource)
+        )
         return state
+      }
+      default: {
+        return state
+      }
     }
   }
 }

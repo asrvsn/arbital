@@ -1,11 +1,13 @@
 import React, { Component } from 'react'
 import Redbox from 'redbox-react'
 import { connect } from 'react-redux'
+import shortid from 'shortid'
 
 import LinearProgress from 'material-ui/LinearProgress';
 
 import backend from '../util/backend'
 import AuthenticatedHOC from './AuthenticatedHOC'
+import { registerReloadListener, unregisterReloadListener } from '../actions'
 
 /**
   NOTE: if using this HOC, do not use AuthenticatedHOC!
@@ -20,6 +22,8 @@ const styles = {
 }
 
 export default (ChildComponent, getter) => {
+  const name = shortid.generate()
+
   class GetterComponent extends Component {
     constructor(props) {
       super(props)
@@ -32,7 +36,17 @@ export default (ChildComponent, getter) => {
     }
 
     componentDidMount() {
-      this.loadData()
+      this.loadAllData()
+      // Register reload listeners for each datasource
+      dispatch(registerReloadListener(
+        name,
+        (dataSource) => this.loadData(dataSource)
+      ))
+    }
+
+    componentWillUnmount() {
+      // Unregister reload listeners
+      dispatch(unregisterReloadListener(name))
     }
 
     render() {
@@ -54,10 +68,7 @@ export default (ChildComponent, getter) => {
           case 'SUCCEEDED': {
             const allChildProps = Object.assign({},
               this.props,
-              childProps,
-              {
-                reloadData: () => this.loadData()
-              }
+              childProps
             )
             return <ChildComponent {...allChildProps} />
           }
@@ -67,24 +78,17 @@ export default (ChildComponent, getter) => {
 
     }
 
-    loadData() {
-      const { session } = this.props
-
-      this.setState({gettingState: 'LOADING'})
-
-      getter(this.props).forEach(item => {
-        const {path, mapResponseToProps} = item
-
+    loadData(dataSource) {
+      if (dataSource in getter) {
+        const { session } = this.props
+        const { path, mapResponseToProps } = getter(this.props)[dataSource]
         backend
           .authenticate(session.id)
           .get(path, (err, response, body) => {
             if (err !== null) {
-
               this.setState({gettingState: 'FAILED', error: err})
-
             } else {
               if (response.statusCode == 200) {
-
                 const { childProps } = this.state
                 const newChildProps = Object.assign(
                   {},
@@ -92,17 +96,25 @@ export default (ChildComponent, getter) => {
                   mapResponseToProps(JSON.parse(body))
                 )
                 this.setState({childProps: newChildProps, gettingState: 'SUCCEEDED'})
-
               } else {
-
                 this.setState({gettingState: 'FAILED', error: response.statusMessage})
-
               }
             }
           })
-      })
+      }
+    }
+
+    loadAllData() {
+      Object.keys(getter).forEach(
+        dataSource => this.loadData(dataSource)
+      )
     }
   }
 
-  return AuthenticatedHOC(GetterComponent)
+  return AuthenticatedHOC(
+    connect(
+      null,
+      (dispatch) => ({ dispatch })
+    )(GetterComponent)
+  )
 }

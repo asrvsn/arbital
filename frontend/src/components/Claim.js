@@ -84,12 +84,10 @@ class Claim extends Component {
 
 export default GetterHOC(
   Claim,
-  (props) => {
-    return [
-      {
-        path: props.location.pathname + '/page',
-        mapResponseToProps: (resp) => {page: resp}
-      }
-    ]
-  }
+  (props) => ({
+    claim: {
+      path: props.location.pathname + '/page',
+      mapResponseToProps: (resp) => {page: resp}
+    }
+  })
 )

@@ -3,12 +3,18 @@ export const authSuccess = (session) => ({
   session
 })
 
-export const setClaimsDirty = (state) => ({
-  type: 'SET_CLAIMS_DIRTY',
-  state
+export const registerReloadListener = (name, listener) => ({
+  type: 'REGISTER_RELOAD_LISTENER',
+  name,
+  listener
 })
 
-export const setArgumentsDirty = (state) => ({
-  type: 'SET_ARGUMENTS_DIRTY',
-  state
+export const unregisterReloadListener = (name) => ({
+  type: 'UNREGISTER_RELOAD_LISTENER',
+  name
+})
+
+export const fireReload = (dataSource) => ({
+  type: 'FIRE_RELOAD',
+  dataSource
 })
