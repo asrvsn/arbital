@@ -36,12 +36,11 @@ class CreateClaim extends Component {
       <FlatButton
         label="Cancel"
         primary={true}
-        onTouchTap={() => this.close()}
+        onTouchTap={() => this.close(null)}
       />,
       <FlatButton
         label={submitted ? "Already submitted" : "Submit"}
         primary={true}
-        keyboardFocused={true}
         onTouchTap={() => this.submit(claim => this.close(claim))}
         disabled={submitted}
       />,
@@ -53,7 +52,7 @@ class CreateClaim extends Component {
         actions={actions}
         modal={false}
         open={open}
-        onRequestClose={() => this.close()}
+        onRequestClose={() => this.close(claim)}
       >
         <TextField
           hintText="Enter claim text"
@@ -78,7 +77,10 @@ class CreateClaim extends Component {
   getClaimCreator() {
     const { args } = this.state
     const text = this.claimTextElem.input.value
-    return {text, args}
+    return {
+      text,
+      args: args.map(arg => arg.id)
+    }
   }
 
   close(claim) {
@@ -92,9 +94,10 @@ class CreateClaim extends Component {
     } else {
       const { session } = this.props
       const claimCreator = this.getClaimCreator()
+      const url = '/claims/create'
       backend
         .authenticate(session.id)
-        .post('/claims/create', claimCreator, (err, response, body) => {
+        .post(url, claimCreator, (err, response, body) => {
           if (err !== null) {
             throw err
           } else {
