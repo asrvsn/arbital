@@ -9,6 +9,7 @@ import AvPlaylistAdd from 'material-ui/svg-icons/av/playlist-add';
 
 import CreateClaim from './CreateClaim'
 import CreateArgument from './CreateArgument'
+import { fireReload } from '../actions'
 
 const styles = {
   footer: {
@@ -58,21 +59,20 @@ class Footer extends Component {
 
   getCreator() {
     const { creatorOpen } = this.state
-    const { router, location } = this.props
 
     switch(creatorOpen) {
       case 'claim':
         return (
           <CreateClaim
             open={true}
-            onRequestClose={claim => dispatch(fireReload('claims'))}
+            onRequestClose={claim => this.closeCreatorAndReload('claims')}
           />
         )
       case 'argument':
         return (
           <CreateArgument
             open={true}
-            onRequestClose={arg => dispatch(fireReload('arguments'))}
+            onRequestClose={arg => this.closeCreatorAndReload('arguments')}
           />
         )
       default:
@@ -84,8 +84,10 @@ class Footer extends Component {
     this.setState({creatorOpen: creator})
   }
 
-  closeCreator() {
+  closeCreatorAndReload(dataSource) {
+    const { dispatch } = this.props
     this.setState({creatorOpen: null})
+    dispatch(fireReload(dataSource))
   }
 }
 

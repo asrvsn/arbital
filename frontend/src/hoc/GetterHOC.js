@@ -38,6 +38,7 @@ export default (ChildComponent, getter) => {
     componentDidMount() {
       this.loadAllData()
       // Register reload listeners for each datasource
+      const { dispatch } = this.props
       dispatch(registerReloadListener(
         name,
         (dataSource) => this.loadData(dataSource)
@@ -46,6 +47,7 @@ export default (ChildComponent, getter) => {
 
     componentWillUnmount() {
       // Unregister reload listeners
+      const { dispatch } = this.props
       dispatch(unregisterReloadListener(name))
     }
 
@@ -79,9 +81,11 @@ export default (ChildComponent, getter) => {
     }
 
     loadData(dataSource) {
-      if (dataSource in getter) {
+      const getterP = getter(this.props)
+      if (dataSource in getterP) {
+        console.warn(name + ' loading datasource: ' + dataSource)
         const { session } = this.props
-        const { path, mapResponseToProps } = getter(this.props)[dataSource]
+        const { path, mapResponseToProps } = getterP[dataSource]
         backend
           .authenticate(session.id)
           .get(path, (err, response, body) => {
@@ -105,8 +109,9 @@ export default (ChildComponent, getter) => {
     }
 
     loadAllData() {
-      Object.keys(getter).forEach(
-        dataSource => this.loadData(dataSource)
+      const getterP = getter(this.props)
+      Object.keys(getterP).forEach(
+        (dataSource) => this.loadData(dataSource)
       )
     }
   }
