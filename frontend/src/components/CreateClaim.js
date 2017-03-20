@@ -66,7 +66,7 @@ class CreateClaim extends Component {
         />
         { childOpen && claim &&
           <CreateArgument
-            claimId={claim.id}
+            linkedClaimId={claim.id}
             onRequestClose={(argument) => this.closeChild(argument)}
           />
         }

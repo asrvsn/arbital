@@ -20,6 +20,7 @@ module Arbital.Database.Driver
   , select
   , selectAll
   , selectWhere1
+  , search
   , insert
   , update
   , delete
@@ -35,7 +36,7 @@ import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as BC
 import           Data.Foldable (foldl')
 import qualified Data.Aeson as A
-import           Control.Monad (replicateM)
+import           Control.Monad (replicateM, forM_)
 import           Control.Monad.Except (throwError)
 import           Hasql.Connection
 import           Hasql.Query
@@ -90,6 +91,22 @@ instance ValuePersistent Text where
   decVal = Dec.text
 
 instance Persistent Text where
+  enc = Enc.value encVal
+  dec = Dec.value decVal
+
+instance ValuePersistent ByteString where
+  encVal = Enc.bytea
+  decVal = Dec.bytea
+
+instance Persistent ByteString where
+  enc = Enc.value encVal
+  dec = Dec.value decVal
+
+instance ValuePersistent Int where
+  encVal = contramap fromIntegral Enc.int8
+  decVal = fromIntegral <$> Dec.int8
+
+instance Persistent Int where
   enc = Enc.value encVal
   dec = Dec.value decVal
 
@@ -290,7 +307,11 @@ psTypeShow = \case
     -- tshow = BC.pack . show
     -- sized tag s = tag <> "(" <> tshow s <> ")" 
 
-data Column = Column { columnName :: ByteString, columnType :: PSQLType }
+data Column = Column 
+  { columnName :: ByteString
+  , columnType :: PSQLType 
+  , hasSearchIndex :: Bool
+  }
 
 data Schema = Schema 
   { idColumn :: Column
@@ -326,13 +347,20 @@ mkSplice :: Int -> ByteString
 mkSplice n = "$" <> BC.pack (show n)
 
 createTable :: (HasTable a) => Proxy a -> Session ()
-createTable p = 
+createTable p = do
   sql $ 
        "CREATE TABLE " 
     <> tableName p 
     <> " (" 
-    <> showSchema (tableSchema p) 
+    <> showSchema sc
     <> ")"
+  forM_ (filter hasSearchIndex $ restColumns sc) $ \col ->
+    sql $ 
+         "CREATE INDEX trgm_idx_" <> tableName p 
+      <> " ON " <> tableName p
+      <> " USING gist (" <> columnName col <> " gist_trgm_ops)"
+  where
+    sc = tableSchema p
 
 dropTable :: (HasTable a) => Proxy a -> Session ()
 dropTable p = sql $ "DROP TABLE " <> tableName p
@@ -362,6 +390,18 @@ selectWhere1 p f = query (fieldValue f) q
       "SELECT * FROM " <> tableName p <> " WHERE " <> fieldName f <> " = $1"
     encoder = enc
     decoder = Dec.maybeRow dec
+
+search :: (HasTable a, Persistent a) => Proxy a -> Int -> Field Text -> Session [a]
+search p n f = query (fieldValue f, n) q
+  where
+    q = statement cmd encoder decoder True
+    cmd = "SELECT *, " <> fn <> " <-> '$1' AS dist" 
+       <> " FROM " <> tableName p
+       <> " ORDER BY dist" 
+       <> " LIMIT $2"
+    encoder = contramap fst enc <> contramap snd enc
+    decoder = Dec.rowsList dec
+    fn = fieldName f
 
 insert :: (HasTable a, Persistent a) => Proxy a -> a -> Session ()
 insert p a = query a q
@@ -397,13 +437,13 @@ instance HasTable User where
   type Id User = UserID
   tableName _ = "users"
   tableSchema _ = Schema
-    { idColumn = Column "id" PText
+    { idColumn = Column "id" PText False
     , restColumns = 
-      [ Column "email" PText
-      , Column "name" PText
-      , Column "claims" (PArray PText)
-      , Column "arguments" (PArray PText)
-      , Column "registrationDate" PTimeStampTZ
+      [ Column "email" PText False
+      , Column "name" PText True
+      , Column "claims" (PArray PText) False
+      , Column "arguments" (PArray PText) False
+      , Column "registrationDate" PTimeStampTZ False
       ]
     }
 
@@ -411,14 +451,14 @@ instance HasTable Claim where
   type Id Claim = ClaimID
   tableName _ = "claims"
   tableSchema _ = Schema
-    { idColumn = Column "id" PText
+    { idColumn = Column "id" PText False
     , restColumns = 
-      [ Column "text" PText
-      , Column "argsFor" (PArray PText)
-      , Column "argsAgainst" (PArray PText)
-      , Column "authorId" PText
-      , Column "authorName" PText
-      , Column "creationDate" PTimeStampTZ
+      [ Column "text" PText True
+      , Column "argsFor" (PArray PText) False
+      , Column "argsAgainst" (PArray PText) False
+      , Column "authorId" PText False
+      , Column "authorName" PText False
+      , Column "creationDate" PTimeStampTZ False
       ]
     }
 
@@ -426,13 +466,13 @@ instance HasTable Argument where
   type Id Argument = ArgumentID
   tableName _ = "arguments"
   tableSchema _ = Schema
-    { idColumn = Column "id" PText
+    { idColumn = Column "id" PText False
     , restColumns = 
-      [ Column "text" PText
-      , Column "claims" (PArray PText)
-      , Column "authorId" PText
-      , Column "authorName" PText
-      , Column "creationDate" PTimeStampTZ
+      [ Column "text" PText True
+      , Column "claims" (PArray PText) False
+      , Column "authorId" PText False
+      , Column "authorName" PText False
+      , Column "creationDate" PTimeStampTZ False
       ]
     }
 
@@ -440,11 +480,11 @@ instance HasTable Commit where
   type Id Commit = CommitID
   tableName _ = "commits"
   tableSchema _ = Schema
-    { idColumn = Column "id" PText
+    { idColumn = Column "id" PText False
     , restColumns = 
-      [ Column "authorId" PText
-      , Column "action" PJSON
-      , Column "creationDate" PTimeStampTZ
-      , Column "message" PText
+      [ Column "authorId" PText False
+      , Column "action" PJSON False 
+      , Column "creationDate" PTimeStampTZ False
+      , Column "message" PText True
       ]
     }

@@ -1,5 +1,6 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Arbital.Endpoints.Claims
   ( ClaimsAPI
@@ -8,6 +9,7 @@ module Arbital.Endpoints.Claims
   ) where
 
 import Servant
+import Data.Text
 
 import Arbital.Types
 import Arbital.State
@@ -24,8 +26,9 @@ type ClaimsAPI =
 
   :<|> "claims" :> Capture "claimid" ClaimID :> "page" :> Get '[JSON] ClaimPage
 
-  -- GET to /claims/:claimid to read a claim
   :<|> "claims" :> Capture "claimid" ClaimID :> Get '[JSON] Claim
+
+  :<|> "claims" :> "search" :> Capture "query" Text :> Get '[JSON] [Claim]
 
   :<|> "claims" :> Get '[JSON] [Claim]
 
@@ -36,6 +39,7 @@ claimsServer s =
   :<|>  newArgAgainst s
   :<|>  retrieveClaimPage
   :<|>  retrieveClaim
+  :<|>  searchClaims
   :<|>  retrieveAllClaims
 
 newClaim :: Session -> ClaimCreator -> App Claim
@@ -75,6 +79,9 @@ retrieveClaimPage i = withDb $ do
 
 retrieveClaim :: ClaimID -> App Claim
 retrieveClaim = withDb . getClaim
+
+searchClaims :: Text -> App [Claim]
+searchClaims q = withDb $ search Proxy 5 (Field "text" q)
 
 retrieveAllClaims :: App [Claim]
 retrieveAllClaims = withDb $ selectAll Proxy 

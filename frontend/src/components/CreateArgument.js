@@ -7,7 +7,7 @@ import Chip from 'material-ui/Chip';
 
 import GetterHOC from '../hoc/GetterHOC'
 import AuthoredListItem from './AuthoredListItem';
-import ClaimFinder from './ClaimFinder'
+import Finder from './Finder'
 
 import backend from '../util/backend'
 
@@ -55,10 +55,12 @@ class CreateArgument extends Component {
         open={open}
         onRequestClose={() => this.close()}
       >
+
         <TextField
           hintText="Enter argument summary"
           ref={elem => this.argTextElem = elem}
         />
+
         <DropDownMenu
           value={isFor ? 'For' : 'Against'}
           onChange={(e, i, v) => this.setIsFor(v == 'For')}
@@ -66,6 +68,7 @@ class CreateArgument extends Component {
           <MenuItem value={1} primaryText="For" />
           <MenuItem value={2} primaryText="Against" />
         </DropDownMenu>
+
         { dynLinkedClaim ?
             <Chip>{dynLinkedClaim.text}</Chip>
           :
@@ -77,8 +80,18 @@ class CreateArgument extends Component {
               onTouchTap={e => this.openChild()}
             />
         }
+
         { childOpen &&
-            <ClaimFinder
+            <Finder
+              optionsAvailable={false}
+              searchType="claims"
+              mkResult={{text, authorId, authorName} =>
+                ({
+                  text,
+                  userId: authorId,
+                  userName: authorName
+                })
+              }
               onRequestClose={claim => this.closeChild(claim)}
             />
         }
