@@ -9,18 +9,20 @@ const styles = {
   },
 }
 
-const AuthorChip = (props) => {
-  const { authorName, onTouchTap } = props
+class AuthorChip extends Component {
+  render() {
+    const { authorName, onTouchTap } = this.props
 
-  return (
-    <Chip
-      onTouchTap={e => onTouchTap(e)}
-      style={styles.chip}
-    >
-      <Avatar size={32}>{authorName[0]}</Avatar>
-      {authorName}
-    </Chip>
-  )
+    return (
+      <Chip
+        onTouchTap={e => onTouchTap(e)}
+        style={styles.chip}
+      >
+        <Avatar size={32}>{authorName[0]}</Avatar>
+        {authorName}
+      </Chip>
+    )
+  }
 }
 
 export default AuthorChip

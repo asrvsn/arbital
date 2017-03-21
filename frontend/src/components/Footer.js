@@ -1,15 +1,16 @@
 import React, { Component, PropTypes } from 'react'
 import { connect } from 'react-redux'
 
-import { SpeedDial, SpeedDialItem } from 'react-mui-speeddial';
 import ContentCreate from 'material-ui/svg-icons/content/create'
 import NavigationClose from 'material-ui/svg-icons/navigation/close'
 import ContentAddBox from 'material-ui/svg-icons/content/add-box';
 import AvPlaylistAdd from 'material-ui/svg-icons/av/playlist-add';
+import { SpeedDial, BubbleList, BubbleListItem } from 'react-speed-dial';
+import Avatar from 'material-ui/Avatar';
 
 import CreateClaim from './dialogs/CreateClaim'
 import CreateArgument from './dialogs/CreateArgument'
-import { fireReload } from '../actions'
+import { pushDialog } from '../actions'
 
 const styles = {
   footer: {
@@ -21,74 +22,65 @@ const styles = {
 }
 
 class Footer extends Component {
-  constructor(props) {
-    super(props)
+  constructor(props, context) {
+    super(props, context)
     this.state = {
-      creatorOpen: null
+      speedDialOpen: false
     }
   }
 
   render() {
-    const creator = this.getCreator()
+    const { dispatch } = this.props
+    const { speedDialOpen } = this.state
+
+    const createClaimIcon = (
+      <Avatar icon={<ContentAddBox />} />
+    )
+    const createArgumentIcon = (
+      <Avatar icon={<AvPlaylistAdd />} />
+    )
+
+    const openArgumentDialog = () => {
+      this.setState({speedDialOpen: false})
+      dispatch(pushDialog({
+        dialogType: 'CREATE_ARGUMENT',
+        props: {}
+      }))
+    }
+
+    const openClaimDialog = () => {
+      this.setState({speedDialOpen: false})
+      dispatch(pushDialog({
+        dialogType: 'CREATE_CLAIM',
+        props: {}
+      }))
+    }
 
     return (
       <div style={styles.footer}>
+
         <SpeedDial
-          fabContentOpen={<ContentCreate />}
-          fabContentClose={<NavigationClose />}
+          isInitiallyOpen={speedDialOpen}
         >
-          <SpeedDialItem
-            label="New claim"
-            fabContent={<ContentAddBox />}
-            onTouchTap={e => this.openCreator('claim')}
-          />
+          <BubbleList>
 
-          <SpeedDialItem
-            label="New argument"
-            fabContent={<AvPlaylistAdd />}
-            onTouchTap={e => this.openCreator('argument')}
-          />
+            <BubbleListItem
+              primaryText="Create claim"
+              rightAvatar={createClaimIcon}
+              onTouchTap={e => openClaimDialog()}
+            />
 
+            <BubbleListItem
+              primaryText="Create argument"
+              rightAvatar={createArgumentIcon}
+              onTouchTap={e => openArgumentDialog()}
+            />
+
+          </BubbleList>
         </SpeedDial>
-
-        {creator}
 
       </div>
     )
-  }
-
-  getCreator() {
-    const { creatorOpen } = this.state
-
-    switch(creatorOpen) {
-      case 'claim':
-        return (
-          <CreateClaim
-            open={true}
-            onRequestClose={claim => this.closeCreatorAndReload(claim, 'claims')}
-          />
-        )
-      case 'argument':
-        return (
-          <CreateArgument
-            open={true}
-            onRequestClose={arg => this.closeCreatorAndReload(arg, 'arguments')}
-          />
-        )
-      default:
-        return <noscript />
-    }
-  }
-
-  openCreator(creator) {
-    this.setState({creatorOpen: creator})
-  }
-
-  closeCreatorAndReload(result, dataSource) {
-    this.setState({creatorOpen: null})
-    if (result !== null) {
-      this.props.dispatch(fireReload(dataSource))
-    }
   }
 }
 

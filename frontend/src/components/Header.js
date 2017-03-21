@@ -53,6 +53,10 @@ class Header extends Component {
 
           <ToolbarGroup>
 
+            <IconButton tooltip="Home" onTouchTap={e => goHome()}>
+              <ActionHome />
+            </IconButton>
+
             <IconButton
               tooltip="search"
               onTouchTap={e => this.openFinder(e)}
@@ -73,10 +77,6 @@ class Header extends Component {
                 dropDownEnabled={true}
               />
             </Popover>
-
-            <IconButton tooltip="Home" onTouchTap={e => goHome()}>
-              <ActionHome />
-            </IconButton>
 
             <ToolbarSeparator />
 

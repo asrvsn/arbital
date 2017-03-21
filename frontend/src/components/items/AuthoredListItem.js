@@ -7,7 +7,15 @@ const styles = {
   entry: {
     display: 'flex',
     flexDirection: 'row',
+    alignItems: 'center',
+  },
+  leftContainer: {
+    paddingRight: 10
+  },
+  rightContainer: {
+    display: 'flex',
     justifyContent: 'space-between',
+    flexGrow: 1,
     alignItems: 'center'
   },
   text: {
@@ -30,24 +38,31 @@ const AuthoredListItem = (props) => {
   const entry = (
     <div style={styles.entry}>
 
-      { leftElem || <noscript /> }
-
-      <div style={styles.text}>
-        {text}
+      <div style={styles.leftContainer}>
+        { leftElem || <noscript /> }
       </div>
 
-      <AuthorChip
-        authorName={authorName}
-        authorId={authorId}
-        onTouchTap={e => {
-          e.preventDefault()
-          e.stopPropagation()
-          if (!! onAuthorTouchTap) {
-            onAuthorTouchTap(e)
-          }
-        }}
-        style={styles.chip}
-      />
+      <div style={styles.rightContainer}>
+
+        <div style={styles.text}>
+          {text}
+        </div>
+
+        <div style={styles.chip}>
+          <AuthorChip
+            authorName={authorName}
+            authorId={authorId}
+            onTouchTap={e => {
+              e.preventDefault()
+              e.stopPropagation()
+              if (!! onAuthorTouchTap) {
+                onAuthorTouchTap(e)
+              }
+            }}
+          />
+        </div>
+
+      </div>
 
     </div>
   )

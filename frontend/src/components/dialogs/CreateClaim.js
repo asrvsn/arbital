@@ -1,4 +1,5 @@
 import React, { Component } from 'react'
+import { connect } from 'react-redux'
 
 import FlatButton from 'material-ui/FlatButton'
 import Dialog from 'material-ui/Dialog'
@@ -6,9 +7,8 @@ import TextField from 'material-ui/TextField'
 import RaisedButton from 'material-ui/RaisedButton';
 
 import backend from '../../util/backend'
-
+import { pushDialog } from '../../actions'
 import AuthenticatedHOC from '../hoc/AuthenticatedHOC'
-import CreateArgument from './CreateArgument'
 
 const styles = {
   addArgument: {
@@ -21,16 +21,27 @@ class CreateClaim extends Component {
   constructor(props) {
     super(props)
     this.state = {
-      childOpen: false,
       submitted: false,
-      args: [],
+      linkedArguments: [],
       claim: null
     }
   }
 
+  componentWillReceiveProps(nextProps) {
+    const { pushState } = nextProps
+    const { linkedArguments } = this.state
+    if ((!! pushState) && (pushState.action == 'POP')) {
+      const { props: { createdArgument } } = pushState
+      const argExists = linkedArguments.some((arg) => arg.id == createdArgument.id)
+      if (! argExists) {
+        linkedArguments.push(createdArgument)
+        this.setState({ linkedArguments })
+      }
+    }
+  }
+
   render() {
-    const { open } = this.props
-    const { childOpen, submitted, claim, args } = this.state
+    const { submitted, claim, linkedArguments } = this.state
 
     const actions = [
       <FlatButton
@@ -51,37 +62,34 @@ class CreateClaim extends Component {
         title="New claim"
         actions={actions}
         modal={false}
-        open={open}
+        open={true}
         onRequestClose={() => this.close(claim)}
       >
+
         <TextField
           hintText="Enter claim text"
           ref={elem => this.claimTextElem = elem}
           fullWidth={true}
         />
+
         <br />
+
         <RaisedButton
           label="Add argument for claim"
           style={styles.addArgument}
           onTouchTap={() => this.openChild()}
         />
-        { childOpen && claim &&
-          <CreateArgument
-            linkedClaimId={claim.id}
-            onRequestClose={(argument) => this.closeChild(argument)}
-            open={childOpen}
-          />
-        }
+
       </Dialog>
     )
   }
 
   getClaimCreator() {
-    const { args } = this.state
+    const { linkedArguments } = this.state
     const text = this.claimTextElem.input.value
     return {
       text,
-      args: args.map(arg => arg.id)
+      args: linkedArguments.map(arg => arg.id)
     }
   }
 
@@ -115,21 +123,32 @@ class CreateClaim extends Component {
   }
 
   openChild() {
-    this.submit(() => {
-      this.setState({childOpen: true})
+    const { dispatch } = this.props
+
+    this.submit((createdClaim) => {
+      dispatch(pushDialog({
+        dialogType: 'CREATE_ARGUMENT',
+        props: {
+          createdClaim
+        }
+      }))
     })
   }
 
-  closeChild(argument) {
-    const { args } = this.state
-    if (argument !== null) {
-      args.push(argument)
-    }
-    this.setState({
-      childOpen: false,
-      args
-    })
+  closeChild(createdArgument) {
+    const {  dispatch } = this.props
+    dispatch(popDialog({
+      dialogType: 'CREATE_ARGUMENT',
+      props: {
+        createdArgument
+      }
+    }))
   }
 }
 
-export default AuthenticatedHOC(CreateClaim)
+export default AuthenticatedHOC(
+  connect(
+    null,
+    (dispatch) => ({ dispatch })
+  )(CreateClaim)
+)
