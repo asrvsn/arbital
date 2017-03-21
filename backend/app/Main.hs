@@ -10,7 +10,7 @@ import Control.Monad (void)
 import Network.Wai (Middleware)
 import Network.Wai.Handler.Warp
 import Network.Wai.Middleware.Cors 
-import Network.Wai.Middleware.RequestLogger (logStdoutDev)
+import Network.Wai.Middleware.RequestLogger (logStdout)
 import Data.Proxy
 
 import Arbital.Types
@@ -34,7 +34,7 @@ main = do
       initApp c
       r <- newAppState c
       putStrLn $ "[Info] starting app"
-      run 5000 (myCors . logStdoutDev $ app r)
+      run 5000 (myCors . logStdout $ app r)
 
 myCors :: Middleware
 myCors = cors (const $ Just policy)
@@ -43,10 +43,10 @@ myCors = cors (const $ Just policy)
 
 initApp :: Connection -> IO ()
 initApp c = void $ do
-  runDb c $ dropTable (Proxy :: Proxy User) 
-  runDb c $ dropTable (Proxy :: Proxy Claim)
-  runDb c $ dropTable (Proxy :: Proxy Argument)
-  runDb c $ dropTable (Proxy :: Proxy Commit)
+  -- runDb c $ dropTable (Proxy :: Proxy User) 
+  -- runDb c $ dropTable (Proxy :: Proxy Claim)
+  -- runDb c $ dropTable (Proxy :: Proxy Argument)
+  -- runDb c $ dropTable (Proxy :: Proxy Commit)
   runDb c $ createTable (Proxy :: Proxy User) 
   runDb c $ createTable (Proxy :: Proxy Claim)
   runDb c $ createTable (Proxy :: Proxy Argument)
