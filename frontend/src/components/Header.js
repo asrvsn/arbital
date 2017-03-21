@@ -74,7 +74,6 @@ class Header extends Component {
             >
               <Finder
                 onRequestClose={(result) => this.closeFinder(result)}
-                dropDownEnabled={true}
               />
             </Popover>
 

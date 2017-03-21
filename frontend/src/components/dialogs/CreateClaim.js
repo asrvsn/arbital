@@ -30,7 +30,7 @@ class CreateClaim extends Component {
   componentWillReceiveProps(nextProps) {
     const { pushState } = nextProps
     const { linkedArguments } = this.state
-    if ((!! pushState) && (pushState.action == 'POP')) {
+    if ((!! pushState) && (pushState.action == 'POP') && (pushState.dialogType == 'CREATE_ARGUMENT')) {
       const { props: { createdArgument } } = pushState
       const argExists = linkedArguments.some((arg) => arg.id == createdArgument.id)
       if (! argExists) {

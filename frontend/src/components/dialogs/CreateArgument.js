@@ -11,24 +11,46 @@ import MenuItem from 'material-ui/MenuItem';
 import RaisedButton from 'material-ui/RaisedButton';
 import Divider from 'material-ui/Divider';
 import {List, ListItem} from 'material-ui/List';
-import {Card, CardHeader} from 'material-ui/Card';
+import {Card, CardHeader, CardTitle} from 'material-ui/Card';
+import Subheader from 'material-ui/Subheader';
+import Popover from 'material-ui/Popover';
+import Toggle from 'material-ui/Toggle';
 
 import GetterHOC from '../hoc/GetterHOC'
-import AuthoredListItem from '../items/AuthoredListItem';
+import ClaimListItem from '../items/ClaimListItem'
 import Finder from '../Finder'
 
 import { pushDialog } from '../../actions'
 import backend from '../../util/backend'
 
 const styles = {
-  secondRow: {
+  body: {
+    paddingLeft: 0,
+    paddingRight: 0,
+    paddingBottom: 0,
+  },
+  row: {
     display: 'flex',
     flexDirection: 'row',
-    height: 20,
-    alignContent: 'center',
+    alignItems: 'center',
     justifyContent: 'space-between'
   },
-  thirdRow: {
+  row1group1: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  title1: {
+    paddingRight: 10,
+  },
+  rightButton: {
+    paddingRight: 10,
+  },
+  createClaimButton: {
+    width: '100%'
+  },
+  popover: {
+    width: 400
   }
 }
 
@@ -42,13 +64,14 @@ class CreateArgument extends Component {
       isFor: true,
       dynLinkedClaim: null,
       submitEnabled: false,
-      openChild: null
+      openChild: null,
+      childAnchorEl: null
     }
   }
 
   componentWillReceiveProps(nextProps) {
     const { pushState } = nextProps
-    if ((!! pushState) && (pushState.action == 'POP')) {
+    if ((!! pushState) && (pushState.action == 'POP') && pushState.dialogType == 'CREATE_CLAIM') {
       const { props: { createdClaim } } = pushState
       const { openChild, supportingClaims } = this.state
       switch(openChild) {
@@ -78,7 +101,14 @@ class CreateArgument extends Component {
   }
 
   render() {
-    const { openChild, supportingClaims, arg, isFor, dynLinkedClaim } = this.state
+    const {
+      openChild,
+      supportingClaims,
+      arg,
+      isFor,
+      dynLinkedClaim,
+      childAnchorEl
+    } = this.state
 
     const actions = [
       <FlatButton
@@ -95,97 +125,156 @@ class CreateArgument extends Component {
 
     return (
       <Dialog
-        title="New argument"
         actions={actions}
         modal={false}
         open={true}
         onRequestClose={() => this.close()}
         autoScrollBodyContent={true}
+        bodyStyle={styles.body}
       >
 
-        <Card>
-          <CardHeader subtitle="Argument" />
-
-          <TextField
-            hintText="Enter argument summary"
-            ref={elem => this.argTextElem = elem}
-            fullWidth={true}
-          />
-
-          <div style={styles.secondRow}>
-
-            <div>
-              <DropDownMenu
-                value={isFor ? 1 : 2}
-                onChange={(e, i, v) => this.setIsFor(v == 1)}
-              >
-                <MenuItem value={1} primaryText="For" />
-                <MenuItem value={2} primaryText="Against" />
-              </DropDownMenu>
-            </div>
-
-            { dynLinkedClaim ?
-                <Chip>{dynLinkedClaim.text}</Chip>
-              :
-                <RaisedButton
-                  label={openChild === "linkToClaim" ? "Cancel" : "Link to a claim"}
-                  labelPosition="after"
-                  primary={true}
-                  icon={<ContentAddBox />}
-                  onTouchTap={e => this.toggleOpenChild("linkToClaim")}
-                />
-            }
-
-          </div>
-        </Card>
+        <CardTitle
+          title="New Argument"
+          subtitle={
+            <Toggle
+              label={isFor ? 'For' : 'Against'}
+              onToggle={() => this.toggleIsFor()}
+            />
+          }
+        />
 
         <Divider />
 
-        <Card>
-          <CardHeader subtitle="Supporting claims" />
-          <div style={styles.thirdRow}>
+        <div style={styles.row}>
+          <div style={styles.row1group1}>
+            <Subheader style={styles.title1}>
+              {`Argument ${isFor ? 'for' : 'against'} `}
+            </Subheader>
+            <Chip style={styles.chip}>
+              {dynLinkedClaim
+                ? `${dynLinkedClaim.text.substr(0,20)}...`
+                : 'No claim linked'
+              }
+            </Chip>
+          </div>
+          <div style={styles.rightButton}>
             <RaisedButton
-              label={openChild === "addSupportingClaim" ? "Cancel" : "Add a supporting claim"}
-              labelPosition="after"
+              label="Link to claim"
+              labelPosition="before"
+              primary={true}
+              icon={<ContentAddBox />}
+              onTouchTap={e => this.openLinkToClaim(e)}
+              fullWidth={true}
+            />
+            <Popover
+              open={openChild === 'linkToClaim'}
+              anchorEl={childAnchorEl}
+              anchorOrigin={{horizontal: 'right', vertical: 'bottom'}}
+              targetOrigin={{horizontal: 'right', vertical: 'top'}}
+              onRequestClose={() => this.closeChild()}
+              style={styles.popover}
+            >
+              <Finder
+                mode="claims"
+                onRequestClose={(claim) => this.closeLinkToClaim(claim)}
+              />
+            </Popover>
+          </div>
+        </div>
+
+        <Divider />
+
+        <div style={styles.row}>
+          <Subheader>Supporting claims</Subheader>
+          <div style={styles.rightButton}>
+            <RaisedButton
+              label="Add"
+              labelPosition="before"
               backgroundColor="green"
               icon={<ContentAddBox />}
-              onTouchTap={e => this.toggleOpenChild("addSupportingClaim")}
+              onTouchTap={e => this.openAddSupportingClaim(e)}
             />
-            { (openChild !== null) ?
-                <div style={styles.finder}>
-                  <RaisedButton
-                    label="Create new claim"
-                    onTouchTap={e => this.openCreateClaimDialog()}
-                  />
-                  <Finder
-                    optionsAvailable={false}
-                    searchType="claims"
-                    onRequestClose={claim => this.closeChild(claim)}
-                  />
-                  <Divider />
-                </div>
-              :
-                <List>
-                  { supportingClaims.map(claim =>
-                      <AuthoredListItem
-                        key={claim.id}
-                        text={claim.text}
-                        authorId={claim.authorId}
-                        authorName={claim.authorName}
-                      />
-                    )
-                  }
-                </List>
-            }
+            <Popover
+              open={openChild === 'addSupportingClaim'}
+              anchorEl={childAnchorEl}
+              anchorOrigin={{horizontal: 'right', vertical: 'bottom'}}
+              targetOrigin={{horizontal: 'right', vertical: 'top'}}
+              onRequestClose={() => this.closeChild()}
+              style={styles.popover}
+            >
+              <Finder
+                mode="claims"
+                onRequestClose={(claim) => this.closeAddSupportingClaim(claim)}
+              />
+              <FlatButton
+                label="Create claim"
+                style={styles.createClaimButton}
+                onTouchTap={e => this.openCreateClaimDialog()}
+              />
+            </Popover>
           </div>
-        </Card>
+        </div>
+
+        <List>
+          { supportingClaims.map(claim =>
+              <ClaimListItem
+                key={claim.id}
+                claim={claim}
+                linksOff={true}
+              />
+            )
+          }
+        </List>
 
       </Dialog>
     )
   }
 
-  setIsFor(v) {
-    this.setState({isFor: v})
+  openLinkToClaim(e) {
+    this.setState({
+      openChild: 'linkToClaim',
+      childAnchorEl: e.currentTarget
+    })
+  }
+
+  closeLinkToClaim(claim) {
+    this.setState({
+      dynLinkedClaim: claim,
+      openChild: null
+    })
+  }
+
+  openAddSupportingClaim(e) {
+    this.setState({
+      openChild: 'addSupportingClaim',
+      childAnchorEl: e.currentTarget
+    })
+  }
+
+  closeAddSupportingClaim(claim) {
+    const { supportingClaims } = this.state
+    supportingClaims.push(claim)
+    this.setState({
+      supportingClaims,
+      openChild: null
+    })
+  }
+
+  closeChild() {
+    this.setState({openChild: null})
+  }
+
+  toggleIsFor() {
+    this.setState({isFor: ! this.state.isFor})
+  }
+
+  openCreateClaimDialog() {
+    this.setState({openChild: null})
+    const { dispatch } = this.props
+    dispatch(pushDialog({
+      dialogType: 'CREATE_CLAIM',
+      props: {}
+    }))
   }
 
   getArgCreator() {
@@ -227,47 +316,6 @@ class CreateArgument extends Component {
       })
   }
 
-  toggleOpenChild(child) {
-    this.setState({
-      openChild: child === this.state.openChild ? null : child
-    })
-  }
-
-  closeChild(claim) {
-    const { openChild, dynLinkedClaim, supportingClaims } = this.state
-
-    switch(openChild) {
-      case 'linkToClaim': {
-        this.setState({
-          openChild: null,
-          dynLinkedClaim: claim || dynLinkedClaim
-        })
-        return
-      }
-      case 'addSupportingClaim': {
-        if (claim !== null) {
-          supportingClaims.push(claim)
-        }
-        this.setState({
-          openChild: null,
-          supportingClaims
-        })
-        return
-      }
-      default: {
-        this.setState({openChild: null})
-        return
-      }
-    }
-  }
-
-  openCreateClaimDialog() {
-    const { dispatch } = this.props
-    dispatch(pushDialog({
-      dialogType: 'CREATE_CLAIM',
-      props: {}
-    }))
-  }
 }
 
 export default GetterHOC(

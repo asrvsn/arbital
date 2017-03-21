@@ -31,11 +31,11 @@ const styles = {
 }
 
 const ClaimListItem = (props) => {
-  const { claim, router } = props
+  const { claim, router, linksOff } = props
   const { argsFor, argsAgainst } = claim
 
-  const goToClaim = () => router.push(`/claims/${claim.id}`)
-  const goToAuthor = () => router.push(`/users/${claim.authorId}`)
+  const goToClaim = () => (!linksOff && router.push(`/claims/${claim.id}`))
+  const goToAuthor = () => (!linksOff && router.push(`/users/${claim.authorId}`))
 
   const leftElem = (
     <div style={styles.leftElem}>

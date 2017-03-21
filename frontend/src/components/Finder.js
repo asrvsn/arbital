@@ -17,9 +17,12 @@ const styles = {
     flexDirection: 'row'
   },
   dropdown: {
+    paddingLeft: 0,
   },
   input: {
-    flexGrow: 1
+    flexGrow: 1,
+    marginLeft: 5,
+    marginRight: 5
   }
 }
 
@@ -34,14 +37,14 @@ class Finder extends Component {
   }
 
   componentDidMount() {
-    const { searchType } = this.props
-    if (!! searchType) {
-      this.setSearchType(searchType)
+    const { mode } = this.props
+    if (!! mode) {
+      this.setSearchType(mode)
     }
   }
 
   render() {
-    const { dropDownEnabled } = this.props
+    const { mode } = this.props
     const { dynSearchType, searchText, results } = this.state
     const mkResult = (result) => {
       switch(dynSearchType) {
@@ -65,7 +68,7 @@ class Finder extends Component {
 
         <div style={styles.firstRow}>
 
-          { dropDownEnabled &&
+          { (mode === undefined) &&
             <DropDownMenu
               value={dynSearchType}
               onChange={(e, i, v) => this.setSearchType(v)}
