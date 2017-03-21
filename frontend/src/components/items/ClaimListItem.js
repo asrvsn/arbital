@@ -43,7 +43,7 @@ const ClaimListItem = (props) => {
       <div style={styles.thumbContainer}>
         <IconButton
           tooltip={`${argsFor.length} arguments for`}
-          tooltipPosition="top-left"
+          tooltipPosition="top-right"
           style={styles.thumb}
         >
           <ActionThumbUp />
@@ -72,6 +72,7 @@ const ClaimListItem = (props) => {
   return (
     <AuthoredListItem
       text={claim.text}
+      subtext={`Created ${claim.creationDate}`}
       authorId={claim.authorId}
       authorName={claim.authorName}
       onTouchTap={e => goToClaim()}

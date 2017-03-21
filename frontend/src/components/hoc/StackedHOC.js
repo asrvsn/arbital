@@ -4,6 +4,7 @@ const StackedHOC = (ChildComponent) => {
 
   class StackedComponent extends Component {
     constructor(props) {
+      console.warn('StackedComponent constructor')
       super(props)
       this.state = {
         pushStateStack: []
@@ -11,6 +12,7 @@ const StackedHOC = (ChildComponent) => {
     }
 
     componentWillReceiveProps(nextProps) {
+      console.warn("StackedHOC componentWillReceiveProps", this.state)
       const { pushState } = nextProps
       if (!! pushState) {
         switch(pushState.action) {
@@ -28,6 +30,7 @@ const StackedHOC = (ChildComponent) => {
 
     render() {
       const { pushStateStack } = this.state
+      console.warn('StackedHOC render: ', pushStateStack)
       return this.renderComponentStack(pushStateStack)
     }
 
@@ -46,10 +49,7 @@ const StackedHOC = (ChildComponent) => {
     }
 
     getChildProps(pushState) {
-      const childProps = Object.assign({ pushState }, this.props)
-      delete childProps.pushConfig
-      delete childProps.popConfig
-      return childProps
+      return Object.assign({ pushState }, this.props)
     }
 
     pushStack(pushState) {
@@ -62,8 +62,10 @@ const StackedHOC = (ChildComponent) => {
     popStack(pushState) {
       const { pushStateStack } = this.state
       pushStateStack.pop()
-      const lastIdx = pushStateStack.length - 1
-      pushStateStack[lastIdx] = pushState
+      if (pushStateStack.length > 0) {
+        const lastIdx = pushStateStack.length - 1
+        pushStateStack[lastIdx] = pushState
+      }
       console.warn('popStack', pushStateStack)
       this.setState({ pushStateStack })
     }

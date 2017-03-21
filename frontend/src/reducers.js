@@ -24,6 +24,7 @@ export default {
 
   dataReloadListeners: (state = {}, action) => {
     const fireListeners = (dataSource) => {
+      console.warn('fireListeners', dataSource)
       Object.values(state).forEach(
         listener => listener(dataSource)
       )
@@ -81,6 +82,7 @@ export default {
             }
           }
         }
+        return state
       }
 
       default: {

@@ -46,6 +46,10 @@ const styles = {
   rightButton: {
     paddingRight: 10,
   },
+  input: {
+    marginLeft: 16,
+    marginRight: 10
+  },
   createClaimButton: {
     width: '100%'
   },
@@ -61,6 +65,7 @@ class CreateArgument extends Component {
     this.state = {
       supportingClaims: [],
       arg: null,
+      argText: "",
       isFor: true,
       dynLinkedClaim: null,
       submitEnabled: false,
@@ -182,6 +187,16 @@ class CreateArgument extends Component {
           </div>
         </div>
 
+        <div style={styles.row}>
+          <TextField
+            style={styles.input}
+            hintText="Enter argument summary"
+            fullWidth={true}
+            multiLine={true}
+            onChange={(e, v) => this.setArgText(v)}
+          />
+        </div>
+
         <Divider />
 
         <div style={styles.row}>
@@ -277,11 +292,14 @@ class CreateArgument extends Component {
     }))
   }
 
+  setArgText(v) {
+    this.setState({argText: v})
+  }
+
   getArgCreator() {
-    const { supportingClaims } = this.state
-    const text = this.argTextElem.input.value
+    const { supportingClaims, argText } = this.state
     return {
-      text,
+      text: argText,
       claims: supportingClaims.map(claim => claim.id)
     }
   }

@@ -10,6 +10,7 @@ module Arbital.Endpoints.Claims
 
 import Servant
 import Data.Text
+import Data.List (sortBy)
 
 import Arbital.Types
 import Arbital.State
@@ -84,4 +85,8 @@ searchClaims :: Text -> App [Claim]
 searchClaims q = withDb $ search Proxy 5 (Field "text" q)
 
 retrieveAllClaims :: App [Claim]
-retrieveAllClaims = withDb $ selectAll Proxy 
+retrieveAllClaims = do
+  cs <- withDb $ selectAll Proxy 
+  return $ sortBy cmp cs
+  where
+    cmp c c' = if claimCreationDate c > claimCreationDate c' then LT else GT

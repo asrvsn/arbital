@@ -4,6 +4,9 @@ import { ListItem } from 'material-ui/List';
 import AuthorChip from '../AuthorChip'
 
 const styles = {
+  listItemStyle: {
+    padding: 2,
+  },
   entry: {
     display: 'flex',
     flexDirection: 'row',
@@ -18,7 +21,16 @@ const styles = {
     flexGrow: 1,
     alignItems: 'center'
   },
+  textContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center'
+  },
   text: {
+  },
+  subtext: {
+    paddingTop: 2,
+    fontSize: 10
   },
   chip: {
   },
@@ -27,6 +39,7 @@ const styles = {
 const AuthoredListItem = (props) => {
   const {
     text,
+    subtext,
     authorName,
     authorId,
     onTouchTap,
@@ -44,8 +57,13 @@ const AuthoredListItem = (props) => {
 
       <div style={styles.rightContainer}>
 
-        <div style={styles.text}>
-          {text}
+        <div style={styles.textContainer}>
+          <div style={styles.text}>
+            {text}
+          </div>
+          <div style={styles.subtext}>
+            {subtext}
+          </div>
         </div>
 
         <div style={styles.chip}>
@@ -69,6 +87,7 @@ const AuthoredListItem = (props) => {
 
   return (
     <ListItem
+      innerDivStyle={styles.listItemStyle}
       primaryText={entry}
       onTouchTap={e => {
         if (onTouchTap) {
