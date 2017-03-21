@@ -5,7 +5,7 @@ import Dialog from 'material-ui/Dialog'
 export default (props) => {
   return (
     <Dialog
-      title="Logged out"
+      title="You are logged out"
       modal={true}
       open={true}
     />

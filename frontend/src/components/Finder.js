@@ -14,14 +14,14 @@ import AuthenticatedHOC from './hoc/AuthenticatedHOC'
 const styles = {
   firstRow: {
     display: 'flex',
-    flexDirection: 'row'
+    flexDirection: 'row',
+    alignItems: 'center'
   },
   dropdown: {
-    paddingLeft: 0,
+    marginTop: -4
   },
   input: {
-    flexGrow: 1,
-    marginLeft: 5,
+    marginLeft: 10,
     marginRight: 5
   }
 }
@@ -68,18 +68,6 @@ class Finder extends Component {
 
         <div style={styles.firstRow}>
 
-          { (mode === undefined) &&
-            <DropDownMenu
-              value={dynSearchType}
-              onChange={(e, i, v) => this.setSearchType(v)}
-              style={styles.dropdown}
-            >
-              <MenuItem value={"claims"} primaryText="claims" />
-              <MenuItem value={"arguments"} primaryText="arguments" />
-              <MenuItem value={"users"} primaryText="users" />
-            </DropDownMenu>
-          }
-
           <TextField
             hintText="search..."
             value={searchText}
@@ -87,6 +75,19 @@ class Finder extends Component {
             onKeyDown={e => this.onKeyDown(e)}
             style={styles.input}
           />
+
+          { (mode === undefined) &&
+            <DropDownMenu
+              value={dynSearchType}
+              onChange={(e, i, v) => this.setSearchType(v)}
+              labelStyle={styles.dropdown}
+              iconStyle={styles.dropdown}
+            >
+              <MenuItem value={"claims"} primaryText="claims" />
+              <MenuItem value={"arguments"} primaryText="arguments" />
+              <MenuItem value={"users"} primaryText="users" />
+            </DropDownMenu>
+          }
 
         </div>
 

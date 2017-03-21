@@ -4,11 +4,27 @@ import {Card, CardActions, CardHeader, CardMedia, CardTitle, CardText} from 'mat
 import {List, ListItem} from 'material-ui/List';
 import FlatButton from 'material-ui/FlatButton';
 import {Tabs, Tab} from 'material-ui/Tabs'
+import RaisedButton from 'material-ui/RaisedButton';
+import Subheader from 'material-ui/Subheader';
+import Divider from 'material-ui/Divider';
 
-import AuthoredListItem from '../items/AuthoredListItem';
+import ArgumentListItem from '../items/ArgumentListItem';
 import GetterHOC from '../hoc/GetterHOC';
 
 const styles = {
+  row1: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between'
+  },
+  row2: {
+    display: 'flex',
+    flexDirection: 'row'
+  },
+  row2item: {
+    flexGrow: 1,
+    flexBasis: 0
+  },
 }
 
 class Claim extends Component {
@@ -20,23 +36,17 @@ class Claim extends Component {
   }
 
   render() {
-    const { page, router } = this.props
+    const { page, router, session } = this.props
     const { claim, argsFor, argsAgainst } = page
-
-    const goToArg = (id) => router.push(`/arguments/${id}`)
-    const goToUser = (id) => router.push(`/users/${id}`)
 
     const getArgsList = (args) => (
       <List>
         { (args.length > 0) ?
             args.map(arg =>
-              <AuthoredListItem
+              <ArgumentListItem
                 key={arg.id}
-                text={arg.text}
-                authorId={arg.authorId}
-                authorName={arg.authorName}
-                onTouchTap={e => goToArg(arg.id)}
-                onAuthorTouchTap={e => goToUser(arg.authorId)}
+                argument={arg}
+                router={router}
               />
             )
           :
@@ -45,29 +55,38 @@ class Claim extends Component {
       </List>
     )
 
+    const isMyClaim = session.user.id === claim.authorId
+
     return (
       <Card>
-        <CardTitle
-          title={claim.text}
-          subtitle={`${claim.authorName} created on ${claim.creationDate}`}
-        />
-        <CardActions>
-          <FlatButton label="Add argument" />
-          <FlatButton label="Update" />
-          <FlatButton label="Delete" />
-        </CardActions>
+        <div style={styles.row1}>
+          <CardTitle
+            title={claim.text}
+            subtitle={`${claim.authorName} created on ${claim.creationDate}`}
+          />
+          { isMyClaim &&
+            <CardActions>
+              <RaisedButton label="Update" primary={true} />
+              <RaisedButton label="Delete" secondary={true} />
+            </CardActions>
+          }
+        </div>
+
+        <Divider />
+
         <CardText>
-
-          <Tabs>
-            <Tab label="For" >
+          <div style={styles.row2}>
+            <div style={styles.row2item}>
+              <Subheader>{`Arguments for (${argsFor.length})`}</Subheader>
               { getArgsList(argsFor) }
-            </Tab>
-            <Tab label="Against" >
-              { getArgsList(argsAgainst )}
-            </Tab>
-          </Tabs>
-
+            </div>
+            <div style={styles.row2item}>
+              <Subheader>{`Arguments against (${argsAgainst.length})`}</Subheader>
+              { getArgsList(argsAgainst) }
+            </div>
+          </div>
         </CardText>
+
       </Card>
     )
   }
@@ -76,7 +95,7 @@ class Claim extends Component {
 export default GetterHOC(
   Claim,
   (props) => ({
-    claim: {
+    CLAIM: {
       path: props.location.pathname + '/page',
       mapResponseToProps: (resp) => ({page: resp})
     }

@@ -19,12 +19,11 @@ export const fireReload = (dataSource) => ({
   dataSource
 })
 
-export const pushDialog = ({dialogType, props}) => ({
-  type: 'INTERACT_DIALOG_STACK',
-  pushState: {action: 'PUSH', dialogType, props}
+export const openDialog = (config) => ({
+  type: 'OPEN_DIALOG',
+  config
 })
 
-export const popDialog = ({dialogType, props}) => ({
-  type: 'INTERACT_DIALOG_STACK',
-  pushState: {action: 'POP', dialogType, props}
+export const closeDialog = () => ({
+  type: 'CLOSE_DIALOG'
 })

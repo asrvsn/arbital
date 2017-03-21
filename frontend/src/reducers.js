@@ -49,39 +49,14 @@ export default {
       }
 
       case 'FIRE_RELOAD': {
-        console.warn('FIRE_RELOAD', action.dataSource)
         // XXX (anand) this does effectful things. Figure out a better way.
         fireListeners(action.datasource)
         return state
       }
 
-      case 'INTERACT_DIALOG_STACK': {
-        const { pushState } = action
-        switch(pushState.action) {
-          case 'PUSH': {
-            return state
-          }
-          case 'POP': {
-            switch(pushState.dialogType) {
-              case 'CREATE_CLAIM': {
-                // refresh all components listening to the claims datasource
-                // when a new claim has been produced by the dialog
-                if (!! pushState.props.createdClaim) {
-                  fireListeners("CLAIMS")
-                }
-                return state
-              }
-              case 'CREATE_ARGUMENT': {
-                // refresh all components listening to the arguments datasource
-                // when a new argument has been produced by the dialog
-                if (!! pushState.props.createdArgument) {
-                  fireListeners("ARGUMENTS")
-                }
-                return state
-              }
-            }
-          }
-        }
+      case 'CLOSE_DIALOG': {
+        // XXX (anand) this is just plain hardcoded.
+        fireListeners("CLAIMS")
         return state
       }
 
@@ -91,11 +66,13 @@ export default {
     }
   },
 
-  lastDialogPushState: (state = null, action) => {
+  currentDialogConfig: (state = {dialogType: 'NONE', payload: {}}, action) => {
     switch(action.type) {
-      case 'INTERACT_DIALOG_STACK': {
-        console.warn('INTERACT_DIALOG_STACK', action.pushState)
-        return action.pushState
+      case 'OPEN_DIALOG': {
+        return action.config
+      }
+      case 'CLOSE_DIALOG': {
+        return {dialogType: 'NONE', payload: {}}
       }
       default: {
         return state

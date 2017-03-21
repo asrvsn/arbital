@@ -87,7 +87,6 @@ export default (ChildComponent, getter) => {
     loadData(dataSource) {
       const getterP = getter(this.props)
       if (dataSource in getterP) {
-        console.warn(name + ' loading datasource: ' + dataSource)
         const { session } = this.props
         const { path, mapResponseToProps } = getterP[dataSource]
         backend

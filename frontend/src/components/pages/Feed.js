@@ -43,7 +43,7 @@ const Feed = (props) => {
 export default GetterHOC(
   Feed,
   (props) => ({
-    claims: {
+    CLAIMS: {
       path: '/',
       mapResponseToProps: (resp) => ({claims: resp})
     }

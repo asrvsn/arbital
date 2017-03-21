@@ -6,8 +6,6 @@ import ContentAddBox from 'material-ui/svg-icons/content/add-box';
 import Chip from 'material-ui/Chip';
 import FlatButton from 'material-ui/FlatButton';
 import TextField from 'material-ui/TextField';
-import DropDownMenu from 'material-ui/DropDownMenu';
-import MenuItem from 'material-ui/MenuItem';
 import RaisedButton from 'material-ui/RaisedButton';
 import Divider from 'material-ui/Divider';
 import {List, ListItem} from 'material-ui/List';
@@ -19,8 +17,8 @@ import Toggle from 'material-ui/Toggle';
 import GetterHOC from '../hoc/GetterHOC'
 import ClaimListItem from '../items/ClaimListItem'
 import Finder from '../Finder'
+import CreateClaim from './CreateClaim'
 
-import { pushDialog } from '../../actions'
 import backend from '../../util/backend'
 
 const styles = {
@@ -64,7 +62,6 @@ class CreateArgument extends Component {
     super(props)
     this.state = {
       supportingClaims: [],
-      arg: null,
       argText: "",
       isFor: true,
       dynLinkedClaim: null,
@@ -74,42 +71,18 @@ class CreateArgument extends Component {
     }
   }
 
-  componentWillReceiveProps(nextProps) {
-    const { pushState } = nextProps
-    if ((!! pushState) && (pushState.action == 'POP') && pushState.dialogType == 'CREATE_CLAIM') {
-      const { props: { createdClaim } } = pushState
-      const { openChild, supportingClaims } = this.state
-      switch(openChild) {
-        case 'linkToClaim': {
-          this.setState({
-            dynLinkedClaim: createdClaim,
-            openChild: null
-          })
-        }
-        case 'addSupportingClaim': {
-          const claimExists = supportingClaims.some(c => c.id == createdClaim.id)
-          if (! claimExists) {
-            supportingClaims.push(createdClaim)
-            this.setState({
-              supportingClaims,
-              openChild: null
-            })
-          }
-        }
-      }
-    }
-  }
-
   componentDidMount() {
-    const { linkedClaim } = this.props
-    this.setState({ dynLinkedClaim: linkedClaim })
+    const { linkedClaim, isFor } = this.props
+    this.setState({
+      dynLinkedClaim: linkedClaim,
+      isFor: isFor !== undefined ? isFor : this.state.isFor
+    })
   }
 
   render() {
     const {
       openChild,
       supportingClaims,
-      arg,
       isFor,
       dynLinkedClaim,
       childAnchorEl
@@ -157,7 +130,7 @@ class CreateArgument extends Component {
             </Subheader>
             <Chip style={styles.chip}>
               {dynLinkedClaim
-                ? `${dynLinkedClaim.text.substr(0,20)}...`
+                ? `${dynLinkedClaim.text.substr(0,40)}...`
                 : 'No claim linked'
               }
             </Chip>
@@ -165,11 +138,8 @@ class CreateArgument extends Component {
           <div style={styles.rightButton}>
             <RaisedButton
               label="Link to claim"
-              labelPosition="before"
-              primary={true}
-              icon={<ContentAddBox />}
               onTouchTap={e => this.openLinkToClaim(e)}
-              fullWidth={true}
+              secondary={true}
             />
             <Popover
               open={openChild === 'linkToClaim'}
@@ -204,10 +174,8 @@ class CreateArgument extends Component {
           <div style={styles.rightButton}>
             <RaisedButton
               label="Add"
-              labelPosition="before"
-              backgroundColor="green"
-              icon={<ContentAddBox />}
               onTouchTap={e => this.openAddSupportingClaim(e)}
+              secondary={true}
             />
             <Popover
               open={openChild === 'addSupportingClaim'}
@@ -240,6 +208,12 @@ class CreateArgument extends Component {
             )
           }
         </List>
+
+        { (openChild === 'createClaimDialog') &&
+            <CreateClaim
+              onRequestClose={claim => this.closeCreateClaimDialog(claim)}
+            />
+        }
 
       </Dialog>
     )
@@ -275,21 +249,25 @@ class CreateArgument extends Component {
     })
   }
 
+  openCreateClaimDialog() {
+    this.setState({openChild: 'createClaimDialog'})
+  }
+
+  closeCreateClaimDialog(claim) {
+    if (!! claim) {
+      this.setState({
+        openChild: null,
+        supportingClaims: this.state.supportingClaims.concat([claim])
+      })
+    }
+  }
+
   closeChild() {
     this.setState({openChild: null})
   }
 
   toggleIsFor() {
     this.setState({isFor: ! this.state.isFor})
-  }
-
-  openCreateClaimDialog() {
-    this.setState({openChild: null})
-    const { dispatch } = this.props
-    dispatch(pushDialog({
-      dialogType: 'CREATE_CLAIM',
-      props: {}
-    }))
   }
 
   setArgText(v) {
@@ -325,7 +303,6 @@ class CreateArgument extends Component {
           throw err
         } else {
           if (response.statusCode == 200) {
-            this.setState({arg: body})
             cb(body)
           } else {
             throw response.statusMessage
@@ -342,10 +319,11 @@ export default GetterHOC(
     (dispatch) => ({ dispatch })
   )(CreateArgument),
   (props) => {
-    if (props.linkedClaimId !== undefined) {
+    const { linkedClaimId } = props
+    if (linkedClaimId !== undefined) {
       return {
         claim: {
-          path: '/claims/' + linkedClaimId,
+          path: `/claims/${linkedClaimId}`,
           mapResponseToProps: (resp) => ({linkedClaim: resp})
         }
       }

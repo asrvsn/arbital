@@ -10,7 +10,7 @@ import Avatar from 'material-ui/Avatar';
 
 import CreateClaim from './dialogs/CreateClaim'
 import CreateArgument from './dialogs/CreateArgument'
-import { pushDialog } from '../actions'
+import { openDialog } from '../actions'
 
 const styles = {
   footer: {
@@ -22,16 +22,9 @@ const styles = {
 }
 
 class Footer extends Component {
-  constructor(props, context) {
-    super(props, context)
-    this.state = {
-      speedDialOpen: false
-    }
-  }
 
   render() {
     const { dispatch } = this.props
-    const { speedDialOpen } = this.state
 
     const createClaimIcon = (
       <Avatar icon={<ContentAddBox />} />
@@ -41,18 +34,18 @@ class Footer extends Component {
     )
 
     const openArgumentDialog = () => {
-      this.setState({speedDialOpen: false})
-      dispatch(pushDialog({
+      this.closeSpeedDial()
+      dispatch(openDialog({
         dialogType: 'CREATE_ARGUMENT',
-        props: {}
+        payload: {}
       }))
     }
 
     const openClaimDialog = () => {
-      this.setState({speedDialOpen: false})
-      dispatch(pushDialog({
+      this.closeSpeedDial()
+      dispatch(openDialog({
         dialogType: 'CREATE_CLAIM',
-        props: {}
+        payload: {}
       }))
     }
 
@@ -60,7 +53,7 @@ class Footer extends Component {
       <div style={styles.footer}>
 
         <SpeedDial
-          isInitiallyOpen={speedDialOpen}
+          ref={elem => this.speedDial = elem}
         >
           <BubbleList>
 
@@ -81,6 +74,10 @@ class Footer extends Component {
 
       </div>
     )
+  }
+
+  closeSpeedDial() {
+    this.speedDial.setState({isOpen: false})
   }
 }
 

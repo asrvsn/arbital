@@ -5,13 +5,18 @@ import FlatButton from 'material-ui/FlatButton';
 import Divider from 'material-ui/Divider';
 import {List, ListItem} from 'material-ui/List';
 
-import AuthoredListItem from '../items/AuthoredListItem';
+import ClaimListItem from '../items/ClaimListItem';
 import GetterHOC from '../hoc/GetterHOC';
 
 const styles = {
   chip: {
     margin: 4,
   },
+  row: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between'
+  }
 }
 
 const Argument = (props) => {
@@ -22,28 +27,29 @@ const Argument = (props) => {
 
   return (
     <Card>
-      <CardTitle
-        title={arg.text}
-        subtitle={arg.authorName}
-      />
-      { isMyArgument &&
-        <CardActions>
-          <FlatButton label="Update" />
-          <FlatButton label="Delete" />
-        </CardActions>
-      }
+      <div style={styles.row}>
+        <CardTitle
+          title={arg.text}
+          subtitle={arg.authorName}
+        />
+        { isMyArgument &&
+          <CardActions>
+            <FlatButton label="Update" />
+            <FlatButton label="Delete" />
+          </CardActions>
+        }
+      </div>
+
       <Divider />
+
       <CardHeader subtitle="Supporting claims" />
       <CardText>
         <List>
           { claims.map(claim =>
-              <AuthoredListItem
+              <ClaimListItem
                 key={claim.id}
-                text={claim.text}
-                authorId={claim.authorId}
-                authorName={claim.authorName}
-                onTouchTap={e => router.push(`/claims/${claim.id}`)}
-                onAuthorTouchTap={e => router.push(`/users/${claim.authorId}`)}
+                claim={claim}
+                router={router}
               />
             )
           }
@@ -56,7 +62,7 @@ const Argument = (props) => {
 export default GetterHOC(
   Argument,
   (props) => ({
-    argument: {
+    ARGUMENT: {
       path: props.location.pathname + '/page',
       mapResponseToProps: (resp) => ({page: resp})
     }

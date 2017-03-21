@@ -1,4 +1,5 @@
 import React, { Component, PropTypes } from 'react'
+import { connect } from 'react-redux'
 
 import ActionThumbDown from 'material-ui/svg-icons/action/thumb-down';
 import ActionThumbUp from 'material-ui/svg-icons/action/thumb-up';
@@ -6,6 +7,7 @@ import Badge from 'material-ui/Badge';
 import IconButton from 'material-ui/IconButton';
 
 import AuthoredListItem from './AuthoredListItem'
+import { openDialog } from '../../actions'
 
 const styles = {
   leftElem: {
@@ -31,11 +33,35 @@ const styles = {
 }
 
 const ClaimListItem = (props) => {
-  const { claim, router, linksOff } = props
+  const { claim, router, linksOff, dispatch } = props
   const { argsFor, argsAgainst } = claim
 
-  const goToClaim = () => (!linksOff && router.push(`/claims/${claim.id}`))
-  const goToAuthor = () => (!linksOff && router.push(`/users/${claim.authorId}`))
+  let goToClaim, goToAuthor, openArgumentForDialog, openArgumentAgainstDialog;
+  if (linksOff) {
+    goToClaim = () => {}
+    goToAuthor = () => {}
+    openArgumentForDialog = () => {}
+    openArgumentAgainstDialog = () => {}
+  } else {
+    goToClaim = () => router.push(`/claims/${claim.id}`)
+    goToAuthor = () => router.push(`/users/${claim.authorId}`)
+    openArgumentForDialog = (e) => {
+      e.preventDefault()
+      e.stopPropagation()
+      dispatch(openDialog({
+        dialogType: 'CREATE_ARGUMENT',
+        payload: { linkedClaimId: claim.id, isFor: true }
+      }))
+    }
+    openArgumentAgainstDialog = (e) => {
+      e.preventDefault()
+      e.stopPropagation()
+      dispatch(openDialog({
+        dialogType: 'CREATE_ARGUMENT',
+        payload: { linkedClaimId: claim.id, isFor: false }
+      }))
+    }
+  }
 
   const leftElem = (
     <div style={styles.leftElem}>
@@ -45,6 +71,7 @@ const ClaimListItem = (props) => {
           tooltip={`${argsFor.length} arguments for`}
           tooltipPosition="top-right"
           style={styles.thumb}
+          onTouchTap={e => openArgumentForDialog(e)}
         >
           <ActionThumbUp />
         </IconButton>
@@ -58,6 +85,7 @@ const ClaimListItem = (props) => {
           tooltip={`${argsAgainst.length} arguments against`}
           tooltipPosition="top-right"
           style={styles.thumb}
+          onTouchTap={e => openArgumentAgainstDialog(e)}
         >
           <ActionThumbDown />
         </IconButton>
@@ -82,4 +110,7 @@ const ClaimListItem = (props) => {
   )
 }
 
-export default ClaimListItem
+export default connect(
+  null,
+  (dispatch) => ({ dispatch })
+)(ClaimListItem)
