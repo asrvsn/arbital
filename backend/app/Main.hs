@@ -47,7 +47,9 @@ initApp c = void $ do
   -- runDb c $ dropTable (Proxy :: Proxy Claim)
   -- runDb c $ dropTable (Proxy :: Proxy Argument)
   -- runDb c $ dropTable (Proxy :: Proxy Commit)
-  runDb c $ createTable (Proxy :: Proxy User) 
-  runDb c $ createTable (Proxy :: Proxy Claim)
-  runDb c $ createTable (Proxy :: Proxy Argument)
-  runDb c $ createTable (Proxy :: Proxy Commit)
+  p . runDb c $ createTable (Proxy :: Proxy User) 
+  p . runDb c $ createTable (Proxy :: Proxy Claim)
+  p . runDb c $ createTable (Proxy :: Proxy Argument)
+  p . runDb c $ createTable (Proxy :: Proxy Commit)
+  where
+    p m = m >>= (putStrLn . (\i -> "[info][db] " ++ i) . show)

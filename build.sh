@@ -6,6 +6,7 @@ mkdir dist
 
 # Frontend build
 cd frontend
+export PORT=80
 npm run clean && npm run compile
 cp -r dist ../dist/frontend
 
