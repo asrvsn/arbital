@@ -8,6 +8,8 @@ Install requirements
 $ sudo apt-get update
 $ sudo apt-get install postgresql postgresql-contrib
 ```
+Set per [this](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-postgresql-on-ubuntu-16-04)
+
 Configure db. Change the user/password credentials in `backend/src/Arbital/Constants.hs` to match current user.
 ```bash
 $ psql
